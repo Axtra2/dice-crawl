@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.11)
+cmake_minimum_required (VERSION 3.12)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 include(FetchContent)
@@ -17,3 +17,4 @@ target_link_libraries(ftxui-starter
   PRIVATE ftxui::component # Not needed for this example.
 )
 
+target_include_directories(ftxui-starter PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/model)
