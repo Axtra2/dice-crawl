@@ -18,3 +18,4 @@ target_link_libraries(roguelike
 )
 
 target_include_directories(roguelike PRIVATE "src/game")
+set_property(TARGET roguelike PROPERTY CXX_STANDARD 20)

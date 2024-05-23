@@ -6,9 +6,12 @@
 #include <optional>
 #include <cassert>
 #include <cstdint>
+#include <utility>
 #include <random>
 #include <string>
 #include <vector>
+#include <tuple>
+#include <map>
 
 
 // aliases
@@ -49,6 +52,8 @@ struct Player {
 // items
 
 struct ItemInfo {
+    static constexpr ItemID EMPTY = 0;
+
     struct WearInfo {
         enum class WearType {
             HAND,
@@ -62,106 +67,251 @@ struct ItemInfo {
         std::optional<std::function<Attack(Attack)>> attackModifier = std::nullopt;
     };
 
-    ItemID id = 0;
-    WearInfo wearInfo;
+    // ItemID id = 0;
+    double w = 0.0;
+    std::string name;
+    std::optional<WearInfo> wearInfo = std::nullopt;
 };
 
-const auto& itemsDict() {
-    static const std::unordered_map<ItemID, ItemInfo> infos_;
+const auto& getItemsDict() {
+    using enum ItemInfo::WearInfo::WearType;
+    static const std::unordered_map<ItemID, ItemInfo> infos_ = {
+        { ItemInfo::EMPTY, { .w = 1.0 } },
+        { 1, {
+            .w = 0.01,
+            .name = "sword",
+            .wearInfo = ItemInfo::WearInfo{
+                .wearType = HAND,
+                .attackModifier = [](Attack a){return a + 1;}
+            }
+        } },
+        // { 1, { .w = 0.1, .name = "sword" } },
+    };
     return infos_;
 }
 
 
 // map
 
-class MapGeometry {
-public:
-    MapGeometry(int32_t width, int32_t height)
-      : width_(width),
-        height_(height),
-        data_(height, std::vector<TileID>(width))
-    {
-        assert(width >= 0);
-        assert(height >= 0);
-    }
+// class SparceMat2D {
+// public:
+//     SparceMat2D(int32_t width, int32_t height)
+//       : width_(width),
+//         height_(height),
+//         data_()
+//     {
+//         assert(width > 0);
+//         assert(height > 0);
+//     }
 
-    const TileID& operator()(int32_t x, int32_t y) const {
-        assert(x >= 0);
-        assert(y >= 0);
-        assert(x < width_);
-        assert(y < height_);
-        return data_[y][x];
-    }
+//     TileID get(int32_t x, int32_t y) const {
+//         auto it = data_.find({x, y});
+//         return it == data_.end() ? TileInfo::EMPTY : it->second;
+//     }
 
-    TileID& operator()(int32_t x, int32_t y) {
-        return const_cast<TileID&>(
-            static_cast<const MapGeometry*>(this)->operator()(x, y)
-        );
-    }
+//     void set(int32_t x, int32_t y, TileID tileID) {
+//         if (tileID == TileInfo::EMPTY) {
+//             data_.erase({x, y});
+//         } else {
+//             data_[{x, y}] = tileID;
+//         }
+//     }
 
-    int32_t width() const {
-        return width_;
-    }
+    // const TileID& operator()(int32_t x, int32_t y) const {
+    //     assert(x >= 0);
+    //     assert(y >= 0);
+    //     assert(x < width_);
+    //     assert(y < height_);
+    //     return data_.at(x, y);
+    // }
 
-    int32_t height() const {
-        return height_;
-    }
+    // TileID& operator()(int32_t x, int32_t y) {
+    //     return const_cast<TileID&>(
+    //         static_cast<const RoomGeometry*>(this)->operator()(x, y)
+    //     );
+    // }
 
-private:
-    int32_t width_ = 0;
-    int32_t height_ = 0;
-    std::vector<std::vector<TileID>> data_ = {};
-};
+//     int32_t width() const {
+//         return width_;
+//     }
+
+//     int32_t height() const {
+//         return height_;
+//     }
+
+// private:
+//     int32_t width_ = 0;
+//     int32_t height_ = 0;
+//     std::map<std::pair<int32_t, int32_t>, TileID> data_;
+// };
 
 struct TileInfo {
-    TileID id = 0;
-    double w = 0;
+    static constexpr TileID EMPTY = 0;
+    // TileID id = EMPTY;
+    double w = 0.0;
 };
 
 const auto& getTilesDict() {
     static const std::unordered_map<TileID, TileInfo> infos_ = {
-        { '.', { .id = '.', .w = 1.0 } },
-        { '#', { .id = '#', .w = 0.1 } },
+        { TileInfo::EMPTY, { .w = 1.0 } },
+        { '#', { .w = 0.1 } },
     };
     return infos_;
 }
 
+// template<typename RNG>
+// TileID generateRandomTile(
+//     std::unordered_map<TileID, double> tileDict,
+//     RNG& rng
+// ) {
+//     static const std::vector<TileID> iToTileID_ = [](){
+//         std::vector<TileID> iToTileID;
+//         iToTileID.reserve(tileWeightDict.size());
+//         for (const auto& [id, _] : dict) {
+//             iToTileID.push_back(id);
+//         }
+//         return iToTileID;
+//     }();
+//     static std::discrete_distribution dis_ = [](){
+//         auto& dict = getTilesDict();
+//         std::vector<double> ws;
+//         ws.reserve(dict.size());
+//         for (const auto& [k, v] : dict) {
+//             ws.push_back(v.w);
+//         }
+//         return std::discrete_distribution(ws.begin(), ws.end());
+//     }();
+//     return iToTileID_.at(dis_(rng));
+// }
+
+// template<typename RNG>
+// MapGeometry generateMapGeometry(int32_t width, int32_t height, RNG& rng) {
+//     assert(width >= 0);
+//     assert(height >= 0);
+//     MapGeometry mg(width, height);
+//     for (decltype(height) y = 0; y < height; ++y) {
+//         for (decltype(width) x = 0; x < width; ++x) {
+//             mg(x, y) = generateRandomTile(rng);
+//         }
+//     }
+//     return mg;
+// }
+
+// MapGeometry loadMapGeometry(std::istream& in) {
+//     return MapGeometry(0, 0);
+// }
+
+
+struct Room {
+    int32_t width = 0;
+    int32_t height = 0;
+
+    std::map<std::pair<int32_t, int32_t>, TileID> tiles;
+    std::map<std::pair<int32_t, int32_t>, ItemID> items;
+
+    // neighbouring rooms
+    Room* n = nullptr;
+    Room* s = nullptr;
+    Room* w = nullptr;
+    Room* e = nullptr;
+};
+
+// struct Map {
+//     std::vector<Room> rooms_;
+// };
+
 template<typename RNG>
-TileID generateRandomTile(RNG& rng) {
-    static const std::vector<TileID> iToTileID_ = [](){
-        auto& dict = getTilesDict();
+Room generateRoom(
+    int32_t width,
+    int32_t height,
+    RNG& rng,
+    const std::unordered_map<TileID, TileInfo>& tilesDict = getTilesDict(),
+    const std::unordered_map<ItemID, ItemInfo>& itemsDict = getItemsDict()
+) {
+    assert(width >= 0);
+    assert(height >= 0);
+    assert(width % 2 == 1);
+    assert(height % 2 == 1);
+
+    Room room;
+    room.width = width;
+    room.height = height;
+
+    // tiles
+    const std::vector<TileID> iToTileID = [&](){
         std::vector<TileID> iToTileID;
-        iToTileID.reserve(dict.size());
-        for (const auto& [id, _] : dict) {
+        iToTileID.reserve(tilesDict.size());
+        for (const auto& [id, _] : tilesDict) {
             iToTileID.push_back(id);
         }
         return iToTileID;
     }();
-    static std::discrete_distribution dis_ = [](){
-        auto& dict = getTilesDict();
+    std::discrete_distribution tileDis = [&](){
         std::vector<double> ws;
-        ws.reserve(dict.size());
-        for (const auto& [k, v] : dict) {
+        ws.reserve(tilesDict.size());
+        for (const auto& [_, v] : tilesDict) {
             ws.push_back(v.w);
         }
         return std::discrete_distribution(ws.begin(), ws.end());
     }();
-    return iToTileID_.at(dis_(rng));
-}
 
-template<typename RNG>
-MapGeometry generateMapGeometry(int32_t width, int32_t height, RNG& rng) {
-    assert(width >= 0);
-    assert(height >= 0);
-    MapGeometry mg(width, height);
-    for (decltype(height) y = 0; y < height; ++y) {
-        for (decltype(width) x = 0; x < width; ++x) {
-            mg(x, y) = generateRandomTile(rng);
+    // items
+    static const std::vector<ItemID> iToItemID = [&](){
+        std::vector<ItemID> iToItemID;
+        iToItemID.reserve(itemsDict.size());
+        for (const auto& [id, _] : itemsDict) {
+            iToItemID.push_back(id);
+        }
+        return iToItemID;
+    }();
+    std::discrete_distribution itemDis = [&](){
+        std::vector<double> ws;
+        ws.reserve(itemsDict.size());
+        for (const auto& [_, v] : itemsDict) {
+            ws.push_back(v.w);
+        }
+        return std::discrete_distribution(ws.begin(), ws.end());
+    }();
+
+    for (int32_t y = 0; y < height; ++y) {
+        for (int32_t x = 0; x < width; ++x) {
+            TileID tileID = iToTileID[tileDis(rng)];
+            if (tileID != TileInfo::EMPTY &&
+                x != width / 2 && y != height / 2 // force way between exits
+            ) {
+                room.tiles[{x,y}] = tileID;
+                continue; // do not add items over non-empty tiles
+            }
+
+            ItemID itemID = iToItemID[itemDis(rng)];
+            if (itemID != ItemInfo::EMPTY) {
+                room.items[{x,y}] = itemID;
+            }
         }
     }
-    return mg;
+
+    room.e = &room;
+
+    return room;
 }
 
-MapGeometry loadMapGeometry(std::istream& in) {
-    return MapGeometry(0, 0);
-}
+// template<typename RNG>
+// Map generateMap(
+//     int32_t nRooms,
+//     int32_t minRoomWidth,
+//     int32_t maxRoomWidth,
+//     int32_t minRoomHeight,
+//     int32_t maxRoomHeight,
+//     RNG& rng
+// ) {
+//     std::uniform_int_distribution<int32_t> wdis(minRoomWidth, maxRoomWidth);
+//     std::uniform_int_distribution<int32_t> hdis(minRoomHeight, maxRoomHeight);
+//     std::uniform_int_distribution<int32_t> ndis(0, 4);
+
+//     Map map;
+//     while(true) {
+//         int32_t nNeighbours = ndis(rng);
+//         auto room = generateRoom(wdis(rng), hdis(rng), rng)
+//         map.rooms_.push_back();
+//     }
+// }
