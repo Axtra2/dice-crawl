@@ -10,12 +10,24 @@ FetchContent_Declare(ftxui
 FetchContent_MakeAvailable(ftxui)
 
 project(roguelike LANGUAGES CXX VERSION 1.0.0)
-add_executable(roguelike src/platform/main.cpp)
+add_executable(roguelike
+  src/platform/renderer.cpp
+  src/platform/main.cpp
+  src/game/main_menu.cpp
+  src/game/roaming.cpp
+  src/game/player.cpp
+  src/game/game.cpp
+  src/game/item.cpp
+  src/game/tile.cpp
+)
 target_link_libraries(roguelike
   PRIVATE ftxui::screen
   PRIVATE ftxui::dom
   PRIVATE ftxui::component # Not needed for this example.
 )
 
-target_include_directories(roguelike PRIVATE "src/game")
+target_include_directories(roguelike
+  PRIVATE "src/game"
+  PRIVATE "src/platform"
+)
 set_property(TARGET roguelike PROPERTY CXX_STANDARD 20)
