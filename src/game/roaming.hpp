@@ -21,6 +21,9 @@ private:
 
     void playerPickup();
 
+    void inventorySelectionUp();
+    void inventorySelectionDown();
+
 private:
     State* prevState = nullptr;
     Player player_;

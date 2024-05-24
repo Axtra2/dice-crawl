@@ -218,6 +218,7 @@ static ftxui::Element drawHUD(
     // Hand: Head: Torso: Legs: Feet:
     // inventory
 
+    using namespace std::string_literals;
     using namespace ftxui;
 
     std::stringstream ss;
@@ -231,10 +232,15 @@ static ftxui::Element drawHUD(
         onGroundStr = itemsDict.at(it->second).name;
     }
 
-    std::string handStr = "Nothing";
-    if (player.hand) {
-        handStr = itemsDict.at(player.hand.value()).name;
-    }
+    auto nameOrNothing = [&](const auto& v){
+        return v ? itemsDict.at(v.value()).name : "Nothing"s;
+    };
+
+    std::string handStr = nameOrNothing(player.hand);
+    std::string headStr = nameOrNothing(player.head);
+    std::string torsoStr = nameOrNothing(player.torso);
+    std::string legsStr = nameOrNothing(player.legs);
+    std::string feetStr = nameOrNothing(player.feet);
 
     auto vb = vbox({
         text(ss.str()),
@@ -242,15 +248,42 @@ static ftxui::Element drawHUD(
         text("On ground: " + onGroundStr),
         separator(),
         text("Equipped:"),
-        text("    Hand:  " + handStr),
-        text("    Torso: "),
-        text("    Legs:  "),
-        text("    Feet:  "),
+        text((player.selectedInventorySlot == 0 ? " ->"s : "   "s) + " Hand:  " + handStr),
+        text((player.selectedInventorySlot == 1 ? " ->"s : "   "s) + " Head:  " + headStr),
+        text((player.selectedInventorySlot == 2 ? " ->"s : "   "s) + " Torso: " + torsoStr),
+        text((player.selectedInventorySlot == 3 ? " ->"s : "   "s) + " Legs:  " + legsStr),
+        text((player.selectedInventorySlot == 4 ? " ->"s : "   "s) + " Feet:  " + feetStr),
         separator(),
         text("Inventory:")
     });
-    for (auto item : player.inventory) {
-        vb = vbox({vb, text("    " + itemsDict.at(item).name)});
+    for (int32_t i = 5; auto item : player.inventory) {
+        if (i == player.selectedInventorySlot) {
+            vb = vbox({vb, text(" -> " + itemsDict.at(item).name)});
+        } else {
+            vb = vbox({vb, text("    " + itemsDict.at(item).name)});
+        }
+        ++i;
     }
     return vb;
+}
+
+
+bool Renderer::render(
+    const std::string& title,
+    int32_t selectedOption,
+    const std::span<std::string>& options
+) {
+    using namespace ftxui;
+
+    Element e = vbox({text(title), separator()});
+    for (int32_t i = 0; const auto& op : options) {
+        if (i == selectedOption) {
+            e = vbox({e, text(" -> " + op)});
+        } else {
+            e = vbox({e, text("    " + op)});
+        }
+        ++i;
+    }
+    new(data_) Element(std::move(e));
+    return true;
 }

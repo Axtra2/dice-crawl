@@ -33,6 +33,12 @@ State* Roaming::update(char c) {
     case 'e':
         playerEquip();
         break;
+    case 'k':
+        inventorySelectionUp();
+        break;
+    case 'j':
+        inventorySelectionDown();
+        break;
     }
     return this;
 }
@@ -78,10 +84,15 @@ void Roaming::playerMoveRight() {
 }
 
 void Roaming::playerEquip() {
+    if (player_.selectedInventorySlot < 5) {
+        playerUnequip();
+        return;
+    }
     if (player_.inventory.empty()) {
         return;
     }
-    ItemID itemID = player_.inventory.front(); // TODO
+    int32_t slot = player_.selectedInventorySlot - 5;
+    ItemID itemID = player_.inventory[slot];
     const ItemInfo& itemInfo = getItemsDict().at(itemID);
     if (!itemInfo.wearInfo) {
         return;
@@ -90,7 +101,7 @@ void Roaming::playerEquip() {
     switch (itemInfo.wearInfo.value().wearType) {
     case HAND:
         if (!player_.hand) {
-            player_.inventory.erase(player_.inventory.begin());
+            player_.inventory.erase(player_.inventory.begin() + slot);
             player_.hand = itemID;
         }
         break;
@@ -107,16 +118,55 @@ void Roaming::playerEquip() {
         // TODO
         break;
     }
+    player_.selectedInventorySlot = std::clamp(
+        player_.selectedInventorySlot,
+        0,
+        static_cast<int32_t>(player_.inventory.size() + 4)
+    );
 }
 
 void Roaming::playerUnequip() {
-    // TODO
+    if (player_.inventory.size() >= player_.maxInventorySize) {
+        return;
+    }
+    auto moveToInventory = [&](auto& v){
+        if (v) {
+            player_.inventory.push_back(v.value());
+            v.reset();
+        }
+    };
+    switch (player_.selectedInventorySlot) {
+    case 0: moveToInventory(player_.hand); break;
+    case 1: moveToInventory(player_.head); break;
+    case 2: moveToInventory(player_.torso); break;
+    case 3: moveToInventory(player_.legs); break;
+    case 4: moveToInventory(player_.feet); break;
+    }
 }
 
 void Roaming::playerPickup() {
+    if (player_.inventory.size() >= player_.maxInventorySize) {
+        return;
+    }
     auto it = room_.items.find({player_.x, player_.y});
     if (it != room_.items.end()) {
         player_.inventory.push_back(it->second);
         room_.items.erase(it);
     }
+}
+
+void Roaming::inventorySelectionUp() {
+    player_.selectedInventorySlot = std::clamp(
+        player_.selectedInventorySlot - 1,
+        0,
+        static_cast<int32_t>(player_.inventory.size() + 4)
+    );
+}
+
+void Roaming::inventorySelectionDown() {
+    player_.selectedInventorySlot = std::clamp(
+        player_.selectedInventorySlot + 1,
+        0,
+        static_cast<int32_t>(player_.inventory.size() + 4)
+    );
 }

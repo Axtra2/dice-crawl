@@ -14,7 +14,8 @@ struct Player {
     int32_t health = 10;
     int32_t maxHealth = 10;
 
-    int32_t maxInventorySize = 0;
+    int32_t maxInventorySize = 10;
+    int32_t selectedInventorySlot = 0;
     std::vector<ItemID> inventory = {};
 
     std::optional<ItemID> hand = std::nullopt;

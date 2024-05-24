@@ -14,7 +14,10 @@ int main() {
         if (!game.render(myRenderer)) {
             return ftxui::text("Rendering error");
         }
-        return *reinterpret_cast<ftxui::Element*>(data);
+        ftxui::Element* res_ptr = reinterpret_cast<ftxui::Element*>(data);
+        ftxui::Element res = std::move(*res_ptr);
+        std::destroy_at(res_ptr);
+        return res;
     });
     auto renderer_with_events = ftxui::CatchEvent(renderer, [&](ftxui::Event e){
         if (!e.is_character()) {

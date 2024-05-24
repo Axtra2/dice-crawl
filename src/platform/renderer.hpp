@@ -10,6 +10,7 @@
 #include <utility>
 #include <bitset>
 #include <vector>
+#include <span>
 #include <map>
 
 class Renderer {
@@ -21,6 +22,12 @@ public:
         const Player& player,
         const std::unordered_map<int32_t, TileInfo>& tilesDict = getTilesDict(),
         const std::unordered_map<int32_t, ItemInfo>& itemsDict = getItemsDict()
+    );
+
+    bool render(
+        const std::string& title,
+        int32_t selectedOption,
+        const std::span<std::string>& options
     );
 
 private:
