@@ -34,7 +34,6 @@ private:
 
 private:
     EscMenu* escMenu_ = nullptr;
-    State* prevState_ = nullptr;
     Player player_;
     Map map_;
     int32_t curRoom_ = 0;

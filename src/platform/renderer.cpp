@@ -87,7 +87,7 @@ Rectangle intersectRectangles(
 }
 
 
-void drawAt(ftxui::Canvas& canvas, int32_t x, int32_t y, ftxui::Color color) {
+static void drawAt(ftxui::Canvas& canvas, int32_t x, int32_t y, ftxui::Color color) {
     x *= 2;
     y *= 4;
     canvas.DrawBlock(x + 0, y + 0, true, color);
