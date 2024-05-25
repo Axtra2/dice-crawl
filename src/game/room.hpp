@@ -16,10 +16,10 @@ struct Room {
     std::map<std::pair<int32_t, int32_t>, ItemID> items;
 
     // neighbouring rooms
-    Room* n = nullptr;
-    Room* s = nullptr;
-    Room* w = nullptr;
-    Room* e = nullptr;
+    std::optional<int32_t> n = std::nullopt;
+    std::optional<int32_t> s = std::nullopt;
+    std::optional<int32_t> w = std::nullopt;
+    std::optional<int32_t> e = std::nullopt;
 };
 
 template<typename RNG>
@@ -91,8 +91,6 @@ Room generateRoom(
             }
         }
     }
-
-    room.e = &room; // TODO
 
     return room;
 }

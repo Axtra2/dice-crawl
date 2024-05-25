@@ -9,8 +9,13 @@ const std::unordered_map<ItemID, ItemInfo>& getItemsDict() {
             .name = "sword",
             .wearInfo = ItemInfo::WearInfo{
                 .wearType = HAND,
-                .attackModifier = [](int32_t a){return a + 1;}
-            } } },
+                .attackModifier = [](int32_t a){return a + 1;} } } },
+        { 2, {
+            .w = 0.01,
+            .name = "helmet",
+            .wearInfo = ItemInfo::WearInfo{
+                .wearType = HEAD,
+                .maxHealthModifier = [](int32_t h){return h + 3;} } } },
     };
     return dict_;
 }

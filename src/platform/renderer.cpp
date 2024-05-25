@@ -145,8 +145,11 @@ static void drawRoom(
         ) {
             switch (v)
             {
-            case 1:
+            case 1: // sword
                 drawAt(canvas, x, y, ftxui::Color::Blue);
+                break;
+            case 2: // helmet
+                drawAt(canvas, x, y, ftxui::Color::Purple);
                 break;
             default:
                 break;
@@ -222,7 +225,7 @@ static ftxui::Element drawHUD(
     using namespace ftxui;
 
     std::stringstream ss;
-    ss << "Health: " << player.health << " / " << player.maxHealth
+    ss << "Health: " << player.health << " / " << player.calcMaxHealth()
        << " | Attack: " << player.calcAttack();
 
 

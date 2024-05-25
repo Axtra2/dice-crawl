@@ -1,14 +1,20 @@
 #pragma once
 
+#include <esc_menu.hpp>
 #include <player.hpp>
 #include <state.hpp>
 #include <room.hpp>
+#include <map.hpp>
 
 class Roaming : public State {
 public:
+    Roaming(Map map);
     bool init() override;
     State* update(char c) override;
     bool render(Renderer& renderer) override;
+
+private:
+    enum class Direction { EAST = 0, NORTH = 1, WEST = 2, SOUTH = 3 };
 
 private:
     void playerMoveUp();
@@ -21,11 +27,15 @@ private:
 
     void playerPickup();
 
+    void goToRoom(int32_t roomID, Direction fromDir);
+
     void inventorySelectionUp();
     void inventorySelectionDown();
 
 private:
-    State* prevState = nullptr;
+    EscMenu* escMenu_ = nullptr;
+    State* prevState_ = nullptr;
     Player player_;
-    Room room_;
+    Map map_;
+    int32_t curRoom_ = 0;
 };

@@ -1,16 +1,26 @@
+#include <esc_menu.hpp>
 #include <renderer.hpp>
 #include <roaming.hpp>
 #include <state.hpp>
 
+#include <cassert>
 #include <cstdint>
+#include <utility>
 #include <random>
 
+Roaming::Roaming(Map map)
+  : map_(std::move(map))
+{ }
+
 bool Roaming::init() {
-    static auto rng = std::mt19937(std::random_device{}());
-    room_ = generateRoom(21, 21, rng);
-    player_.x = room_.width / 2;
-    player_.y = room_.height - 1;
-    return true;
+    player_ = Player();
+    player_.x = map_.rooms.at(curRoom_).width / 2;
+    player_.y = map_.rooms.at(curRoom_).height - 1;
+    if (!escMenu_) {
+        escMenu_ = new EscMenu(this);
+    }
+    curRoom_ = 0;
+    return escMenu_->init();
 }
 
 State* Roaming::update(char c) {
@@ -39,46 +49,96 @@ State* Roaming::update(char c) {
     case 'j':
         inventorySelectionDown();
         break;
+    case 'q':
+        return escMenu_;
     }
     return this;
 }
 
 bool Roaming::render(Renderer& renderer) {
-    return renderer.render(room_, player_);
+    return renderer.render(map_.rooms.at(curRoom_), player_);
+}
+
+void Roaming::goToRoom(int32_t roomID, Direction fromDir) {
+    const Room& nextRoom = map_.rooms.at(roomID);
+    using enum Roaming::Direction;
+    switch (fromDir) {
+    case EAST:
+        player_.x = nextRoom.width - 1;
+        player_.y = nextRoom.height / 2;
+        break;
+    case NORTH:
+        player_.x = nextRoom.width / 2;
+        player_.y = 0;
+        break;
+    case WEST:
+        player_.x = 0;
+        player_.y = nextRoom.height / 2;
+        break;
+    case SOUTH:
+        player_.x = nextRoom.width / 2;
+        player_.y = nextRoom.height - 1;
+        break;
+    }
+    curRoom_ = roomID;
 }
 
 void Roaming::playerMoveUp() {
+    const Room& room = map_.rooms.at(curRoom_);
+    if (room.n && player_.x == room.width / 2 && player_.y - 1 == -1) {
+        using enum Roaming::Direction;
+        goToRoom(room.n.value(), SOUTH);
+        return;
+    }
     int32_t oldY = player_.y;
-    player_.y = std::clamp(player_.y - 1, 0, room_.height - 1);
-    auto it = room_.tiles.find({player_.x, player_.y});
-    if (it != room_.tiles.end() && it->second == '#') {
+    player_.y = std::clamp(player_.y - 1, 0, room.height - 1);
+    auto it = room.tiles.find({player_.x, player_.y});
+    if (it != room.tiles.end() && it->second == '#') {
         player_.y = oldY;
     }
 }
 
 void Roaming::playerMoveDown() {
+    const Room& room = map_.rooms.at(curRoom_);
+    if (room.s && player_.x == room.width / 2 && player_.y + 1 == room.height) {
+        using enum Roaming::Direction;
+        goToRoom(room.s.value(), NORTH);
+        return;
+    }
     int32_t oldY = player_.y;
-    player_.y = std::clamp(player_.y + 1, 0, room_.height - 1);
-    auto it = room_.tiles.find({player_.x, player_.y});
-    if (it != room_.tiles.end() && it->second == '#') {
+    player_.y = std::clamp(player_.y + 1, 0, map_.rooms.at(curRoom_).height - 1);
+    auto it = map_.rooms.at(curRoom_).tiles.find({player_.x, player_.y});
+    if (it != map_.rooms.at(curRoom_).tiles.end() && it->second == '#') {
         player_.y = oldY;
     }
 }
 
 void Roaming::playerMoveLeft() {
+    const Room& room = map_.rooms.at(curRoom_);
+    if (room.w && player_.x - 1 == -1 && player_.y == room.height / 2) {
+        using enum Roaming::Direction;
+        goToRoom(room.w.value(), EAST);
+        return;
+    }
     int32_t oldX = player_.x;
-    player_.x = std::clamp(player_.x - 1, 0, room_.width - 1);
-    auto it = room_.tiles.find({player_.x, player_.y});
-    if (it != room_.tiles.end() && it->second == '#') {
+    player_.x = std::clamp(player_.x - 1, 0, map_.rooms.at(curRoom_).width - 1);
+    auto it = map_.rooms.at(curRoom_).tiles.find({player_.x, player_.y});
+    if (it != map_.rooms.at(curRoom_).tiles.end() && it->second == '#') {
         player_.x = oldX;
     }
 }
 
 void Roaming::playerMoveRight() {
+    const Room& room = map_.rooms.at(curRoom_);
+    if (room.e && player_.x + 1 == room.width && player_.y == room.height / 2) {
+        using enum Roaming::Direction;
+        goToRoom(room.e.value(), WEST);
+        return;
+    }
     int32_t oldX = player_.x;
-    player_.x = std::clamp(player_.x + 1, 0, room_.width - 1);
-    auto it = room_.tiles.find({player_.x, player_.y});
-    if (it != room_.tiles.end() && it->second == '#') {
+    player_.x = std::clamp(player_.x + 1, 0, map_.rooms.at(curRoom_).width - 1);
+    auto it = map_.rooms.at(curRoom_).tiles.find({player_.x, player_.y});
+    if (it != map_.rooms.at(curRoom_).tiles.end() && it->second == '#') {
         player_.x = oldX;
     }
 }
@@ -98,25 +158,18 @@ void Roaming::playerEquip() {
         return;
     }
     using enum ItemInfo::WearInfo::WearType;
+    std::optional<ItemID>* place = nullptr;
     switch (itemInfo.wearInfo.value().wearType) {
-    case HAND:
-        if (!player_.hand) {
-            player_.inventory.erase(player_.inventory.begin() + slot);
-            player_.hand = itemID;
-        }
-        break;
-    case HEAD:
-        // TODO
-        break;
-    case TORSO:
-        // TODO
-        break;
-    case LEGS:
-        // TODO
-        break;
-    case FEET:
-        // TODO
-        break;
+    case HAND:  place = &player_.hand; break;
+    case HEAD:  place = &player_.head; break;
+    case TORSO: place = &player_.torso; break;
+    case LEGS:  place = &player_.legs; break;
+    case FEET:  place = &player_.feet; break;
+    }
+    assert(place != nullptr);
+    if (!place->operator bool()) {
+        player_.inventory.erase(player_.inventory.begin() + slot);
+        place->operator=(itemID);
     }
     player_.selectedInventorySlot = std::clamp(
         player_.selectedInventorySlot,
@@ -148,10 +201,10 @@ void Roaming::playerPickup() {
     if (player_.inventory.size() >= player_.maxInventorySize) {
         return;
     }
-    auto it = room_.items.find({player_.x, player_.y});
-    if (it != room_.items.end()) {
+    auto it = map_.rooms.at(curRoom_).items.find({player_.x, player_.y});
+    if (it != map_.rooms.at(curRoom_).items.end()) {
         player_.inventory.push_back(it->second);
-        room_.items.erase(it);
+        map_.rooms.at(curRoom_).items.erase(it);
     }
 }
 

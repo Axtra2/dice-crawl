@@ -12,13 +12,16 @@ FetchContent_MakeAvailable(ftxui)
 project(roguelike LANGUAGES CXX VERSION 1.0.0)
 add_executable(roguelike
   src/platform/renderer.cpp
+  src/platform/files.cpp
   src/platform/main.cpp
   src/game/main_menu.cpp
+  src/game/esc_menu.cpp
   src/game/roaming.cpp
   src/game/player.cpp
   src/game/game.cpp
   src/game/item.cpp
   src/game/tile.cpp
+  src/game/map.cpp
 )
 target_link_libraries(roguelike
   PRIVATE ftxui::screen

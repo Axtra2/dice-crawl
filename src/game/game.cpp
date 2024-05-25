@@ -10,8 +10,12 @@ bool Game::init() {
 }
 
 bool Game::update(char c) {
-    state = state->update(c);
-    return state != nullptr;
+    auto newState = state->update(c);
+    if (newState == nullptr) {
+        return false;
+    }
+    state = newState;
+    return true;
 }
 
 bool Game::render(Renderer& renderer) {

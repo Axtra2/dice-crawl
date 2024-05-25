@@ -1,4 +1,5 @@
 #include <main_menu.hpp>
+#include <esc_menu.hpp>
 #include <renderer.hpp>
 #include <roaming.hpp>
 #include <state.hpp>
@@ -6,35 +7,37 @@
 #include <algorithm>
 #include <cassert>
 
-bool MainMenu::init() {
+bool EscMenu::init() {
+    selectedOption_ = 0;
     optionNames_ = {
+        "Back to Game",
         "New Game",
-        "Load Game",
+        "To Main Menu",
         "Exit"
     };
     optionActions_ = {
-        [](){
-            static auto rng = std::mt19937(std::random_device{}());
-            Map map = { .rooms = { generateRoom(21, 21, rng) } };
-            auto res = new Roaming(std::move(map));
-            res->init();
-            return res;
-        },
-        []() -> State* {
-            auto map = loadMap("map.txt");
-            if (!map) {
-                return nullptr;
+        [&](){return prevState_;},
+        [&](){
+            auto res = dynamic_cast<Roaming*>(prevState_);
+            if (!res) {
+                static auto rng = std::mt19937(std::random_device{}());
+                Map map = { .rooms = { generateRoom(21, 21, rng) } };
+                auto res = new Roaming(std::move(map));
             }
-            auto res = new Roaming(map.value());
             res->init();
             return res;
         },
-        [](){return nullptr;}
+        [](){
+            auto res = new MainMenu();
+            res->init();
+            return res;
+        },
+        [](){return nullptr; /* TODO: save game */ }
     };
     return true;
 }
 
-State* MainMenu::update(char c) {
+State* EscMenu::update(char c) {
     switch (c) {
     case 'j':
         ++selectedOption_;
@@ -44,6 +47,8 @@ State* MainMenu::update(char c) {
         break;
     case 'e':
         return optionActions_[selectedOption_]();
+    case 'q':
+        return prevState_;
     }
 
     assert(optionNames_.size() > 0);
@@ -55,9 +60,9 @@ State* MainMenu::update(char c) {
     return this;
 }
 
-bool MainMenu::render(Renderer& renderer) {
+bool EscMenu::render(Renderer& renderer) {
     return renderer.render(
-        "Main Menu",
+        "Escape Menu",
         selectedOption_,
         {optionNames_.data(), optionNames_.size()}
     );
