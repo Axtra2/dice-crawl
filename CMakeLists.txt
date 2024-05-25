@@ -10,29 +10,41 @@ FetchContent_Declare(ftxui
 FetchContent_MakeAvailable(ftxui)
 
 project(roguelike LANGUAGES CXX VERSION 1.0.0)
-add_executable(roguelike
-  src/platform/renderer.cpp
-  src/platform/files.cpp
-  src/platform/main.cpp
-  src/game/main_menu.cpp
-  src/game/esc_menu.cpp
-  src/game/roaming.cpp
-  src/game/player.cpp
-  src/game/game.cpp
-  src/game/item.cpp
-  src/game/tile.cpp
-  src/game/map.cpp
-)
-target_link_libraries(roguelike
-  PRIVATE ftxui::screen
-  PRIVATE ftxui::dom
-  PRIVATE ftxui::component # Not needed for this example.
+include(CTest)
+enable_testing()
+
+
+SET(DICE_CRAWL_SRCS
+  ${CMAKE_SOURCE_DIR}/src/platform/renderer.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/main_menu.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/roaming.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/player.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/game.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/item.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/tile.cpp
 )
 
-target_include_directories(roguelike
-  PRIVATE "src/game"
-  PRIVATE "src/platform"
+set(DICE_CRAWL_INCLUDE
+  ${CMAKE_SOURCE_DIR}/src/game
+  ${CMAKE_SOURCE_DIR}/src/platform
 )
+
+set(DICE_CRAWL_LIBS
+  ftxui::screen
+  ftxui::dom
+  ftxui::component
+)
+
+add_executable(roguelike 
+  src/platform/main.cpp 
+  ${DICE_CRAWL_SRCS}
+)
+target_link_libraries(roguelike PRIVATE ${DICE_CRAWL_LIBS})
+target_include_directories(roguelike PRIVATE ${DICE_CRAWL_INCLUDE})
 set_property(TARGET roguelike PROPERTY CXX_STANDARD 20)
 
 configure_file("map.txt" "map.txt" COPYONLY)
+
+
+add_subdirectory(tests )
+
