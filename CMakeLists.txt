@@ -34,3 +34,5 @@ target_include_directories(roguelike
   PRIVATE "src/platform"
 )
 set_property(TARGET roguelike PROPERTY CXX_STANDARD 20)
+
+configure_file("map.txt" "map.txt" COPYONLY)
