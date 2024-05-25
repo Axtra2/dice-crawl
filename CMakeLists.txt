@@ -16,12 +16,17 @@ enable_testing()
 
 SET(DICE_CRAWL_SRCS
   ${CMAKE_SOURCE_DIR}/src/platform/renderer.cpp
+  ${CMAKE_SOURCE_DIR}/src/platform/files.cpp
+
+
   ${CMAKE_SOURCE_DIR}/src/game/main_menu.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/esc_menu.cpp
   ${CMAKE_SOURCE_DIR}/src/game/roaming.cpp
   ${CMAKE_SOURCE_DIR}/src/game/player.cpp
   ${CMAKE_SOURCE_DIR}/src/game/game.cpp
   ${CMAKE_SOURCE_DIR}/src/game/item.cpp
   ${CMAKE_SOURCE_DIR}/src/game/tile.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/map.cpp
 )
 
 set(DICE_CRAWL_INCLUDE

@@ -5,7 +5,7 @@
 #include "item.hpp"
 
 int main() {
-    constexpr size_t SWORD_ID = 1;
+    constexpr ItemID SWORD_ID = 1;
     Player p;
     assert(p.maxHealth == p.calcMaxHealth());
 
