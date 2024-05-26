@@ -9,8 +9,8 @@ void print_graph(std::ostream& os, const Map& m) {
     for (int layer = 0; layer < m.num_layers; ++layer) {
         os << "Layer " << layer << ":\n";
         for (const auto& node : m.layers[layer]) {
-            os << "  Node " << node->id << " connects to [";
-            os << "w: " << node->w.value() << ", n: " << node->n.value() << "e: " << node->e.value();
+            os << "  Node " << node << " connects to [";
+            os << "w: " << m.rooms[node].w.value_or(-1) << ", n: " << m.rooms[node].n.value_or(-1) << ", e: " << m.rooms[node].e.value_or(-1);
             os << "]\n";
         }
     }
