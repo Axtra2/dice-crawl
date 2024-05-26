@@ -2,10 +2,13 @@
 
 #include <tile.hpp>
 #include <item.hpp>
+#include <mob.hpp>
 
+#include <unordered_map>
 #include <cassert>
 #include <cstdint>
 #include <random>
+#include <memory>
 #include <map>
 
 struct Room {
@@ -14,6 +17,9 @@ struct Room {
 
     std::map<std::pair<int32_t, int32_t>, TileID> tiles;
     std::map<std::pair<int32_t, int32_t>, ItemID> items;
+
+    std::unordered_map<int32_t, Mob> mobs;
+    std::map<std::pair<int32_t, int32_t>, int32_t> locationToMob;
 
     // neighbouring rooms
     std::optional<int32_t> n = std::nullopt;
@@ -75,6 +81,10 @@ Room generateRoom(
         return std::discrete_distribution(ws.begin(), ws.end());
     }();
 
+    // mobs
+    std::discrete_distribution mobSpawnDis({1.0, 0.01});
+    std::discrete_distribution mobTypeDis(Mob::ws.begin(), Mob::ws.end());
+
     for (int32_t y = 0; y < height; ++y) {
         for (int32_t x = 0; x < width; ++x) {
             TileID tileID = iToTileID[tileDis(rng)];
@@ -88,6 +98,16 @@ Room generateRoom(
             ItemID itemID = iToItemID[itemDis(rng)];
             if (itemID != ItemInfo::EMPTY) {
                 room.items[{x,y}] = itemID;
+            }
+
+            if (mobSpawnDis(rng) == 1) {
+                int32_t mobID = static_cast<int32_t>(room.mobs.size());
+                room.mobs[mobID] = {
+                    .x = x,
+                    .y = y,
+                    .behaviour = static_cast<Mob::Behaviour>(mobTypeDis(rng))
+                };
+                room.locationToMob[{x,y}] = mobID;
             }
         }
     }

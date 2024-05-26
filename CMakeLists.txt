@@ -27,6 +27,7 @@ SET(DICE_CRAWL_SRCS
   ${CMAKE_SOURCE_DIR}/src/game/item.cpp
   ${CMAKE_SOURCE_DIR}/src/game/tile.cpp
   ${CMAKE_SOURCE_DIR}/src/game/map.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/mob.cpp
 
 
   ${CMAKE_SOURCE_DIR}/src/utils/random.cpp

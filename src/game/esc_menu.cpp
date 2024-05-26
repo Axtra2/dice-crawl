@@ -18,12 +18,9 @@ bool EscMenu::init() {
     optionActions_ = {
         [&](){return prevState_;},
         [&](){
-            auto res = dynamic_cast<Roaming*>(prevState_);
-            if (!res) {
-                static auto rng = std::mt19937(std::random_device{}());
-                Map map = { .rooms = { generateRoom(21, 21, rng) } };
-                auto res = new Roaming(std::move(map));
-            }
+            static auto rng = std::mt19937(std::random_device{}());
+            Map map = { .rooms = { generateRoom(21, 21, rng) } };
+            auto res = new Roaming(std::move(map));
             res->init();
             return res;
         },

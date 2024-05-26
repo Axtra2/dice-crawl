@@ -17,6 +17,8 @@ private:
     enum class Direction { EAST = 0, NORTH = 1, WEST = 2, SOUTH = 3 };
 
 private:
+    void step();
+
     void playerMoveUp();
     void playerMoveDown();
     void playerMoveLeft();
@@ -37,4 +39,5 @@ private:
     Player player_;
     Map map_;
     int32_t curRoom_ = 0;
+    std::optional<Direction> playerMove_ = std::nullopt;
 };

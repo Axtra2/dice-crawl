@@ -10,6 +10,8 @@ struct Player {
     int32_t x = 0;
     int32_t y = 0;
 
+    bool isDead = false;
+
     int32_t attack = 0;
     int32_t health = 10;
     int32_t maxHealth = 10;

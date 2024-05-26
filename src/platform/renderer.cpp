@@ -100,6 +100,15 @@ static void drawAt(ftxui::Canvas& canvas, int32_t x, int32_t y, ftxui::Color col
     canvas.DrawBlock(x + 1, y + 3, true, color);
 }
 
+static void drawAt(
+    ftxui::Canvas& canvas,
+    int32_t x,
+    int32_t y,
+    const std::string& text
+) {
+    canvas.DrawText(x * 2, y * 4, text);
+}
+
 static void drawRoom(
     int32_t topLeftX,
     int32_t topLeftY,
@@ -125,8 +134,7 @@ static void drawRoom(
         if (x >= rect.left && x <= rect.right &&
             y >= rect.top  && y <= rect.bottom
         ) {
-            switch (v)
-            {
+            switch (v) {
             case '#':
                 drawAt(canvas, x, y, ftxui::Color::White);
                 break;
@@ -143,8 +151,7 @@ static void drawRoom(
         if (x >= rect.left && x <= rect.right &&
             y >= rect.top  && y <= rect.bottom
         ) {
-            switch (v)
-            {
+            switch (v) {
             case 1: // sword
                 drawAt(canvas, x, y, ftxui::Color::Blue);
                 break;
@@ -156,6 +163,35 @@ static void drawRoom(
             }
         }
     }
+
+    // mobs
+    for (auto& [pos, mobID] : room.locationToMob) {
+        int32_t x = pos.first + topLeftX;
+        int32_t y = pos.second + topLeftY;
+        if (x >= rect.left && x <= rect.right &&
+            y >= rect.top  && y <= rect.bottom
+        ) {
+            using namespace std::string_literals;
+            const Mob& mob = room.mobs.at(mobID);
+            if (mob.isDead) {
+                drawAt(canvas, x, y, "X"s);
+                continue;
+            }
+            using enum Mob::Behaviour;
+            switch (mob.behaviour) {
+            case HOSTILE:
+                drawAt(canvas, x, y, "H"s);
+                break;
+            case PASSIVE:
+                drawAt(canvas, x, y, "P"s);
+                break;
+            case COWARD:
+                drawAt(canvas, x, y, "C"s);
+                break;
+            }
+        }
+    }
+
 
     // left border
     if (topLeftX - 1 >= rect.left && topLeftX - 1 <= rect.right) {

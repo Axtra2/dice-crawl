@@ -1,3 +1,4 @@
+#include <main_menu.hpp>
 #include <esc_menu.hpp>
 #include <renderer.hpp>
 #include <roaming.hpp>
@@ -24,6 +25,12 @@ bool Roaming::init() {
 }
 
 State* Roaming::update(char c) {
+    if (player_.isDead) {
+        // TODO: this is wrong and very temporary
+        auto res = new MainMenu();
+        res->init();
+        return res;
+    }
     switch (c) {
     case 'w':
         playerMoveUp();
@@ -83,64 +90,143 @@ void Roaming::goToRoom(int32_t roomID, Direction fromDir) {
     curRoom_ = roomID;
 }
 
+void Roaming::step() {
+    // update player position
+    Room& room = map_.rooms[curRoom_];
+    if (playerMove_) {
+        using enum Direction;
+        int32_t targetX = player_.x;
+        int32_t targetY = player_.y;
+        switch (playerMove_.value()) {
+        case EAST: ++targetX; break;
+        case NORTH: --targetY; break;
+        case WEST: --targetX; break;
+        case SOUTH: ++targetY; break;
+        }
+        playerMove_ = std::nullopt;
+        if (targetX < 0 || targetX >= room.width ||
+            targetY < 0 || targetY >= room.height
+        ) {
+            if (room.e && targetX == room.width && targetY == room.height / 2) {
+                using enum Roaming::Direction;
+                goToRoom(room.e.value(), WEST);
+                return;
+            }
+            if (room.n && targetX == room.width / 2 && targetY == -1) {
+                using enum Roaming::Direction;
+                goToRoom(room.n.value(), SOUTH);
+                return;
+            }
+            if (room.w && targetX == -1 && targetY == room.height / 2) {
+                using enum Roaming::Direction;
+                goToRoom(room.w.value(), EAST);
+                return;
+            }
+            if (room.s && targetX == room.width / 2 && targetY == room.height) {
+                using enum Roaming::Direction;
+                goToRoom(room.s.value(), NORTH);
+                return;
+            }
+            goto afterPlayerMove;
+        }
+        auto tileIt = room.tiles.find({targetX, targetY});
+        if (tileIt == room.tiles.end() || tileIt->second != '#') {
+            auto mobIt = room.locationToMob.find({targetX, targetY});
+            if (mobIt == room.locationToMob.end()) {
+                player_.x = targetX;
+                player_.y = targetY;
+            } else {
+                Mob& mob = room.mobs[mobIt->second];
+                // TODO: put this into separate function
+                mob.health = std::max(mob.health - player_.calcAttack(), 0);
+                if (mob.health == 0) {
+                    mob.isDead = true;
+                    room.locationToMob.erase(mobIt);
+                }
+            }
+        }
+    }
+afterPlayerMove:
+    for (auto& [mobID, mob] : room.mobs) {
+        if (mob.isDead) {
+            continue;
+        }
+        auto action = mob.pickAction(room, player_);
+        using enum Mob::ActionType;
+        switch (action.type) {
+        case MOVE: {
+            using enum Mob::Direction;
+            int32_t targetX = mob.x;
+            int32_t targetY = mob.y;
+            switch (std::get<Mob::Direction>(action.data)) {
+            case EAST: ++targetX; break;
+            case NORTH: --targetY; break;
+            case WEST: --targetX; break;
+            case SOUTH: ++targetY; break;
+            }
+            if (targetX < 0 || targetX >= room.width ||
+                targetY < 0 || targetY >= room.height
+            ) {
+                goto afterMobAction;
+            }
+            auto tileIt = room.tiles.find({targetX, targetY});
+            if (tileIt == room.tiles.end() || tileIt->second != '#') {
+                auto mobIt = room.locationToMob.find({targetX, targetY});
+                if (mobIt == room.locationToMob.end() || room.mobs[mobIt->second].isDead) {
+                    if (targetX != player_.x || targetY != player_.y) {
+                        room.locationToMob.erase({mob.x, mob.y});
+                        room.locationToMob.insert({{targetX, targetY}, mobID});
+                        mob.x = targetX;
+                        mob.y = targetY;
+                    } else {
+                        player_.health = std::max(player_.health - mob.calcAttack(), 0);
+                        if (player_.health == 0) {
+                            player_.isDead = true;
+                        }
+                    }
+                } else {
+                    int32_t mobID = mobIt->second;
+                    Mob& otherMob = room.mobs[mobID];
+                    // TODO: put this into separate function
+                    otherMob.health = std::max(otherMob.health - mob.calcAttack(), 0);
+                    if (otherMob.health == 0) {
+                        otherMob.isDead = true;
+                        room.locationToMob.erase(mobIt);
+                    }
+                }
+            }
+            break;
+        }
+        case PICKUP:
+            break;
+        case EQUIP:
+            break;
+        }
+    afterMobAction:
+        mob.behaviour = action.newBehaviour;
+        continue;
+    }
+    return;
+}
+
 void Roaming::playerMoveUp() {
-    const Room& room = map_.rooms.at(curRoom_);
-    if (room.n && player_.x == room.width / 2 && player_.y - 1 == -1) {
-        using enum Roaming::Direction;
-        goToRoom(room.n.value(), SOUTH);
-        return;
-    }
-    int32_t oldY = player_.y;
-    player_.y = std::clamp(player_.y - 1, 0, room.height - 1);
-    auto it = room.tiles.find({player_.x, player_.y});
-    if (it != room.tiles.end() && it->second == '#') {
-        player_.y = oldY;
-    }
+    playerMove_ = Direction::NORTH;
+    step();
 }
 
 void Roaming::playerMoveDown() {
-    const Room& room = map_.rooms.at(curRoom_);
-    if (room.s && player_.x == room.width / 2 && player_.y + 1 == room.height) {
-        using enum Roaming::Direction;
-        goToRoom(room.s.value(), NORTH);
-        return;
-    }
-    int32_t oldY = player_.y;
-    player_.y = std::clamp(player_.y + 1, 0, map_.rooms.at(curRoom_).height - 1);
-    auto it = map_.rooms.at(curRoom_).tiles.find({player_.x, player_.y});
-    if (it != map_.rooms.at(curRoom_).tiles.end() && it->second == '#') {
-        player_.y = oldY;
-    }
+    playerMove_ = Direction::SOUTH;
+    step();
 }
 
 void Roaming::playerMoveLeft() {
-    const Room& room = map_.rooms.at(curRoom_);
-    if (room.w && player_.x - 1 == -1 && player_.y == room.height / 2) {
-        using enum Roaming::Direction;
-        goToRoom(room.w.value(), EAST);
-        return;
-    }
-    int32_t oldX = player_.x;
-    player_.x = std::clamp(player_.x - 1, 0, map_.rooms.at(curRoom_).width - 1);
-    auto it = map_.rooms.at(curRoom_).tiles.find({player_.x, player_.y});
-    if (it != map_.rooms.at(curRoom_).tiles.end() && it->second == '#') {
-        player_.x = oldX;
-    }
+    playerMove_ = Direction::WEST;
+    step();
 }
 
 void Roaming::playerMoveRight() {
-    const Room& room = map_.rooms.at(curRoom_);
-    if (room.e && player_.x + 1 == room.width && player_.y == room.height / 2) {
-        using enum Roaming::Direction;
-        goToRoom(room.e.value(), WEST);
-        return;
-    }
-    int32_t oldX = player_.x;
-    player_.x = std::clamp(player_.x + 1, 0, map_.rooms.at(curRoom_).width - 1);
-    auto it = map_.rooms.at(curRoom_).tiles.find({player_.x, player_.y});
-    if (it != map_.rooms.at(curRoom_).tiles.end() && it->second == '#') {
-        player_.x = oldX;
-    }
+    playerMove_ = Direction::EAST;
+    step();
 }
 
 void Roaming::playerEquip() {
