@@ -27,10 +27,14 @@ SET(DICE_CRAWL_SRCS
   ${CMAKE_SOURCE_DIR}/src/game/item.cpp
   ${CMAKE_SOURCE_DIR}/src/game/tile.cpp
   ${CMAKE_SOURCE_DIR}/src/game/map.cpp
+
+
+  ${CMAKE_SOURCE_DIR}/src/utils/random.cpp
 )
 
 set(DICE_CRAWL_INCLUDE
   ${CMAKE_SOURCE_DIR}/src/game
+  ${CMAKE_SOURCE_DIR}/src/utils
   ${CMAKE_SOURCE_DIR}/src/platform
 )
 
@@ -40,8 +44,8 @@ set(DICE_CRAWL_LIBS
   ftxui::component
 )
 
-add_executable(roguelike 
-  src/platform/main.cpp 
+add_executable(roguelike
+  src/platform/main.cpp
   ${DICE_CRAWL_SRCS}
 )
 target_link_libraries(roguelike PRIVATE ${DICE_CRAWL_LIBS})
@@ -51,5 +55,4 @@ set_property(TARGET roguelike PROPERTY CXX_STANDARD 20)
 configure_file("map.txt" "map.txt" COPYONLY)
 
 
-add_subdirectory(tests )
-
+add_subdirectory(tests)
