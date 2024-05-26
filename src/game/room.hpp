@@ -26,6 +26,7 @@ struct Room {
 
     // neighbouring rooms
     std::optional<int32_t> n = std::nullopt;
+    std::optional<int32_t> s = std::nullopt;
     std::optional<int32_t> w = std::nullopt;
     std::optional<int32_t> e = std::nullopt;
 };
