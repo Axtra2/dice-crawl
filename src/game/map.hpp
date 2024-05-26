@@ -1,6 +1,7 @@
 #pragma once
 
 #include <../utils/random.hpp>
+#include <cstddef>
 #include <ostream>
 #include <room.hpp>
 
@@ -10,30 +11,38 @@
 
 struct Map {
     std::vector<Room> rooms;
-    int32_t num_layers;
+    size_t num_layers;
 
     Room* boss_room;
     std::vector<std::vector<Room*>> layers;
 };
+
+void print_graph(std::ostream& os, const Map& m);
 
 std::optional<Map> loadMap(const char* filename);
 
 
 class MapGenerator {
 public:
-    MapGenerator(int num_layers) : current_id(0) {
+    MapGenerator() : current_id(0) {}
+
+    Map generate_graph(int num_layers) {
+        width = 7;
+        height = 7;
+        current_id = 0;
+
+        Map m;
         m.num_layers = num_layers;
-        m.layers.resize(num_layers);
-        generate_graph();
+        m.layers = {static_cast<size_t>(num_layers), std::vector<Room*>()};
+
+        generate_node(0, m);
+        m.boss_room = generate_node(num_layers, m);
+        traverse(m.layers[0][0], m);
+        return m;
     }
 
-    void generate_graph() {
-        generate_node(0);
-        m.boss_room = generate_node(m.num_layers);
-        traverse(m.layers[0][0]);
-    }
-
-    void traverse(Room* node) {
+private:
+    void traverse(Room* node, Map& m) {
         int32_t curr_layer = node->layer;
         if (curr_layer + 1 >= m.num_layers) {
             return;
@@ -58,10 +67,10 @@ public:
         }
 
         for (int i = 0; i < num_nodes; ++i) {
-            Room* new_node = generate_node(curr_layer + 1);
+            Room* new_node = generate_node(curr_layer + 1, m);
             m.layers[curr_layer + 1].push_back(new_node);
             connections.push_back(new_node);
-            traverse(new_node);
+            traverse(new_node, m);
         }
 
         std::optional<int32_t>* fields[] = {&node->n, &node->e, &node->w};
@@ -71,27 +80,15 @@ public:
         }
     }
 
-    Room* generate_node(int layer) {
-        Room node = generateRoom(7, 7, getRNG());
+    Room* generate_node(int layer, Map& m) {
+        Room node = generateRoom(width, height, getRNG());
         node.layer = layer;
         node.id = current_id++;
         m.rooms.emplace_back(node);
         return &m.rooms.back();
     }
 
-    void print_graph(std::ostream& os) const {
-        for (int layer = 0; layer < m.num_layers; ++layer) {
-            os << "Layer " << layer << ":\n";
-            for (const auto& node : m.layers[layer]) {
-                os << "  Node " << node->id << " connects to [";
-                os << "w: " << node->w.value() << ", n: " << node->n.value() << "e: " << node->e.value();
-                os << "]\n";
-            }
-        }
-    }
-
-
-private:
-    Map m;
-    int32_t current_id;
+    int32_t current_id = 0;
+    int32_t width = 1;
+    int32_t height = 1;
 };

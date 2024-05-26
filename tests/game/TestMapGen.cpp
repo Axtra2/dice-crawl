@@ -6,6 +6,7 @@
 #include "map.hpp"
 
 int main() {
-    MapGenerator mg(5);
-    mg.print_graph(std::cout);
+    MapGenerator mg;
+    Map m = mg.generate_graph(7);
+    print_graph(std::cout, m);
 }
