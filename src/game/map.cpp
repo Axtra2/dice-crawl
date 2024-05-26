@@ -55,9 +55,6 @@ std::optional<Map> loadMap(const char* filename) {
         if (w != -1) {
             room.w = w;
         }
-        if (s != -1) {
-            room.s = s;
-        }
     }
     return map;
 }

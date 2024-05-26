@@ -12,6 +12,9 @@
 #include <map>
 
 struct Room {
+    int32_t id = 0;
+    int32_t layer = 0;
+
     int32_t width = 0;
     int32_t height = 0;
 
@@ -23,7 +26,6 @@ struct Room {
 
     // neighbouring rooms
     std::optional<int32_t> n = std::nullopt;
-    std::optional<int32_t> s = std::nullopt;
     std::optional<int32_t> w = std::nullopt;
     std::optional<int32_t> e = std::nullopt;
 };
