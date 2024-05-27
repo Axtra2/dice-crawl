@@ -1,5 +1,7 @@
 #pragma once
 
+#include <dice.hpp>
+
 #include <functional>
 #include <optional>
 #include <cstdint>
@@ -19,8 +21,8 @@ struct ItemInfo {
             FEET
         };
         WearType wearType;
-        std::optional<std::function<int32_t(int32_t)>> maxHealthModifier = std::nullopt;
-        std::optional<std::function<int32_t(int32_t)>> attackModifier = std::nullopt;
+        std::optional<Dice<std::function<int32_t(int32_t)>>> attackDice = std::nullopt;
+        std::optional<Dice<std::function<int32_t(int32_t)>>> defenseDice = std::nullopt;
     };
 
     double w = 0.0;

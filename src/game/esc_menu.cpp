@@ -19,7 +19,7 @@ bool EscMenu::init() {
         [&](){return prevState_;},
         [&](){
             static auto rng = std::mt19937(std::random_device{}());
-            Map map = { .rooms = { generateRoom(21, 21, rng) } };
+            Map map = std::move(MapGenerator().generate_graph(5));
             auto res = new Roaming(std::move(map));
             res->init();
             return res;

@@ -1,4 +1,7 @@
 #include <item.hpp>
+#include <dice.hpp>
+
+#include <functional>
 
 const std::unordered_map<ItemID, ItemInfo>& getItemsDict() {
     using enum ItemInfo::WearInfo::WearType;
@@ -9,13 +12,27 @@ const std::unordered_map<ItemID, ItemInfo>& getItemsDict() {
             .name = "sword",
             .wearInfo = ItemInfo::WearInfo{
                 .wearType = HAND,
-                .attackModifier = [](int32_t a){return a + 1;} } } },
+                .attackDice = Dice<std::function<int32_t(int32_t)>>{
+                    [](int32_t base){ return base * base; },
+                    [](int32_t base){ return base + 5; },
+                    [](int32_t base){ return base * 2; },
+                    [](int32_t base){ return base; },
+                    [](int32_t     ){ return 5; },
+                    [](int32_t     ){ return 0; }
+                } } } },
         { 2, {
             .w = 0.01,
             .name = "helmet",
             .wearInfo = ItemInfo::WearInfo{
                 .wearType = HEAD,
-                .maxHealthModifier = [](int32_t h){return h + 3;} } } },
+                .defenseDice = Dice<std::function<int32_t(int32_t)>>{
+                    [](int32_t){ return 0; },
+                    [](int32_t){ return 1; },
+                    [](int32_t){ return 2; },
+                    [](int32_t){ return 3; },
+                    [](int32_t){ return 4; },
+                    [](int32_t){ return 5; }
+                } } } }
     };
     return dict_;
 }

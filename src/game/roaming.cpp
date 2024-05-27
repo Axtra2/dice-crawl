@@ -25,12 +25,6 @@ bool Roaming::init() {
 }
 
 State* Roaming::update(char c) {
-    if (player_.isDead) {
-        // TODO: this is wrong and very temporary
-        auto res = new MainMenu();
-        res->init();
-        return res;
-    }
     switch (c) {
     case 'w':
         playerMoveUp();
@@ -58,6 +52,12 @@ State* Roaming::update(char c) {
         break;
     case 'q':
         return escMenu_;
+    }
+    if (player_.isDead) {
+        // TODO: this is wrong and very temporary
+        auto res = new MainMenu();
+        res->init();
+        return res;
     }
     return this;
 }
@@ -138,7 +138,7 @@ void Roaming::step() {
             } else {
                 Mob& mob = room.mobs[mobIt->second];
                 // TODO: put this into separate function
-                mob.health = std::max(mob.health - player_.calcAttack(), 0);
+                mob.health = std::max(mob.health - player_.throwDiceForAttack(), 0);
                 if (mob.health == 0) {
                     mob.isDead = true;
                     room.locationToMob.erase(mobIt);
@@ -179,7 +179,7 @@ afterPlayerMove:
                         mob.x = targetX;
                         mob.y = targetY;
                     } else {
-                        player_.health = std::max(player_.health - mob.calcAttack(), 0);
+                        player_.health = std::max(player_.health - std::max((mob.calcAttack() - player_.throwDiceForDefense()), 0), 0);
                         if (player_.health == 0) {
                             player_.isDead = true;
                         }

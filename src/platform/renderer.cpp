@@ -261,8 +261,11 @@ static ftxui::Element drawHUD(
     using namespace ftxui;
 
     std::stringstream ss;
-    ss << "Health: " << player.health << " / " << player.calcMaxHealth()
-       << " | Attack: " << player.calcAttack();
+    ss << "Health: " << player.health << " / " << player.maxHealth
+       << " | Base Attack Dice:";
+    for (const auto& v : player.baseAttackDice) {
+        ss << " " << v;
+    }
 
 
     std::string onGroundStr = "Nothing";
