@@ -109,7 +109,7 @@ void Roaming::step() {
         ) {
             if (room.e && targetX == room.width && targetY == room.height / 2) {
                 using enum Roaming::Direction;
-                goToRoom(room.e.value(), WEST);
+                goToRoom(room.e.value(), SOUTH);
                 return;
             }
             if (room.n && targetX == room.width / 2 && targetY == -1) {
@@ -119,12 +119,12 @@ void Roaming::step() {
             }
             if (room.w && targetX == -1 && targetY == room.height / 2) {
                 using enum Roaming::Direction;
-                goToRoom(room.w.value(), EAST);
+                goToRoom(room.w.value(), SOUTH);
                 return;
             }
             if (room.s && targetX == room.width / 2 && targetY == room.height) {
                 using enum Roaming::Direction;
-                goToRoom(room.s.value(), NORTH);
+                goToRoom(room.s.value(), SOUTH);
                 return;
             }
             goto afterPlayerMove;
