@@ -1,9 +1,14 @@
 #include <ftxui/dom/elements.hpp>
 
-#include <renderer.hpp>
+#include <platform/renderer.hpp>
+#include <game/character/player.hpp>
+#include <game/direction.hpp>
+#include <game/item.hpp>
+#include <game/map.hpp>
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <sstream>
 #include <string>
 
@@ -14,37 +19,37 @@ Renderer::Renderer(void* data)
 static void drawRoom(
     int32_t topLeftX,
     int32_t topLeftY,
-    const Room& room,
+    const Map& map,
     ftxui::Canvas& canvas
 );
 
 static ftxui::Element drawHUD(
     const Room& room,
     const Player& player,
-    const std::unordered_map<int32_t, ItemInfo>& itemsDict
+    int32_t selectedInventorySlot
 );
 
-bool Renderer::render(
-    const Room& room,
+void Renderer::render(
+    const Map& map,
     const Player& player,
-    const std::unordered_map<int32_t, TileInfo>& tilesDict,
-    const std::unordered_map<int32_t, ItemInfo>& itemsDict
+    int32_t selectedInventorySlot
 ) {
     using namespace ftxui;
 
-    auto c = Canvas(100, 100);
+    auto s = Terminal::Size();
+    auto c = Canvas((s.dimx * 2) / 2 /* make space for HUD */, s.dimy * 4);
     int32_t centerX = (c.width() / 2) / 2;
     int32_t centerY = (c.height() / 4) / 2;
+    const auto& room = map.currentRoom();
     drawRoom(
-        centerX - player.x,
-        centerY - player.y,
-        room,
+        centerX - room.getPlayerX(),
+        centerY - room.getPlayerY(),
+        map,
         c
     );
     c.DrawText(c.width() / 2, c.height() / 2, "x");
-    auto hud = drawHUD(room, player, itemsDict);
+    auto hud = drawHUD(room, player, selectedInventorySlot);
     new(data_) Element(hbox({canvas(std::move(c)), separator(), hud}));
-    return true;
 }
 
 
@@ -109,17 +114,28 @@ static void drawAt(
     canvas.DrawText(x * 2, y * 4, text);
 }
 
+static void drawAt(
+    ftxui::Canvas& canvas,
+    int32_t x,
+    int32_t y,
+    const std::string& text,
+    ftxui::Color color
+) {
+    canvas.DrawText(x * 2, y * 4, text, color);
+}
+
 static void drawRoom(
     int32_t topLeftX,
     int32_t topLeftY,
-    const Room& room,
+    const Map& map,
     ftxui::Canvas& canvas
 ) {
+    const auto& room = map.currentRoom();
     auto rect = intersectRectangles(
         topLeftX - 1, // -1 for border
         topLeftY - 1,
-        topLeftX + room.width - 1 + 1, // +1 for border
-        topLeftY + room.height - 1 + 1,
+        topLeftX + room.getWidth() - 1 + 1, // +1 for border
+        topLeftY + room.getHeight() - 1 + 1,
 
         0,
         0,
@@ -128,7 +144,7 @@ static void drawRoom(
     );
 
     // tiles
-    for (auto& [k, v] : room.tiles) {
+    for (const auto& [k, v] : room.getTiles()) {
         int32_t x = k.first + topLeftX;
         int32_t y = k.second + topLeftY;
         if (x >= rect.left && x <= rect.right &&
@@ -145,7 +161,7 @@ static void drawRoom(
     }
 
     // items
-    for (auto& [k, v] : room.items) {
+    for (const auto& [k, v] : room.getItems()) {
         int32_t x = k.first + topLeftX;
         int32_t y = k.second + topLeftY;
         if (x >= rect.left && x <= rect.right &&
@@ -165,42 +181,41 @@ static void drawRoom(
     }
 
     // mobs
-    for (auto& [pos, mobID] : room.locationToMob) {
-        int32_t x = pos.first + topLeftX;
-        int32_t y = pos.second + topLeftY;
+    for (auto& [mobID, mob] : room.getMobs()) {
+        int32_t x = mob.getX() + topLeftX;
+        int32_t y = mob.getY() + topLeftY;
         if (x >= rect.left && x <= rect.right &&
             y >= rect.top  && y <= rect.bottom
         ) {
             using namespace std::string_literals;
-            const Mob& mob = room.mobs.at(mobID);
-            if (mob.isDead) {
+            if (mob.isDead()) {
                 drawAt(canvas, x, y, "X"s);
                 continue;
             }
-            using enum Mob::Behaviour;
-            switch (mob.behaviour) {
-            case HOSTILE:
-                drawAt(canvas, x, y, "H"s);
-                break;
-            case PASSIVE:
-                drawAt(canvas, x, y, "P"s);
-                break;
-            case COWARD:
-                drawAt(canvas, x, y, "C"s);
-                break;
+            auto icon = mob.getStrategyName().substr(0, 1);
+            using ftxui::Color;
+            Color color = Color::White;
+            switch (icon.front()) {
+            case 'H': color = Color::Red; break;
+            case 'P': color = Color::White; break;
+            case 'C': color = Color::Yellow; break;
             }
+            drawAt(canvas, x, y, icon, color);
         }
     }
 
-
+    using enum Direction;
     // left border
     if (topLeftX - 1 >= rect.left && topLeftX - 1 <= rect.right) {
         for (
             int32_t y = std::max(rect.top, topLeftY - 1);
-            y <= std::min(rect.bottom, topLeftY + room.height);
+            y <= std::min(rect.bottom, topLeftY + room.getHeight());
             ++y
         ) {
-            if (!room.w || y != topLeftY + room.height / 2) {
+            if (
+                !map.currentRoomHasNeighbour(WEST) ||
+                !room.isDoor(-1, y - topLeftY)
+            ) {
                 drawAt(canvas, topLeftX - 1, y, ftxui::Color::Red);
             }
         }
@@ -210,37 +225,52 @@ static void drawRoom(
     if (topLeftY - 1 >= rect.top && topLeftY - 1 <= rect.bottom) {
         for (
             int32_t x = std::max(rect.left, topLeftX - 1);
-            x <= std::min(rect.right, topLeftX + room.width);
+            x <= std::min(rect.right, topLeftX + room.getWidth());
             ++x
         ) {
-            if (!room.n || x != topLeftX + room.width / 2) {
+            if (
+                !map.currentRoomHasNeighbour(NORTH) ||
+                !room.isDoor(x - topLeftX, -1)
+            ) {
                 drawAt(canvas, x, topLeftY - 1, ftxui::Color::Red);
             }
         }
     }
 
     // right border
-    if (topLeftX + room.width >= rect.left && topLeftX + room.width <= rect.right) {
+    if (
+        topLeftX + room.getWidth() >= rect.left &&
+        topLeftX + room.getWidth() <= rect.right
+    ) {
         for (
             int32_t y = std::max(rect.top, topLeftY - 1);
-            y <= std::min(rect.bottom, topLeftY + room.height);
+            y <= std::min(rect.bottom, topLeftY + room.getHeight());
             ++y
         ) {
-            if (!room.e || y != topLeftY + room.height / 2) {
-                drawAt(canvas, topLeftX + room.width, y, ftxui::Color::Red);
+            if (
+                !map.currentRoomHasNeighbour(EAST) ||
+                !room.isDoor(room.getWidth(), y - topLeftY)
+            ) {
+                drawAt(canvas, topLeftX + room.getWidth(), y, ftxui::Color::Red);
             }
         }
     }
 
     // bottom border
-    if (topLeftY + room.height >= rect.top && topLeftY + room.height <= rect.bottom) {
+    if (
+        topLeftY + room.getHeight() >= rect.top &&
+        topLeftY + room.getHeight() <= rect.bottom
+    ) {
         for (
             int32_t x = std::max(rect.left, topLeftX - 1);
-            x <= std::min(rect.right, topLeftX + room.width);
+            x <= std::min(rect.right, topLeftX + room.getWidth());
             ++x
         ) {
-            if (!room.s || x != topLeftX + room.width / 2) {
-                drawAt(canvas, x, topLeftY + room.height, ftxui::Color::Red);
+            if (
+                !map.currentRoomHasNeighbour(SOUTH) ||
+                !room.isDoor(x - topLeftX, room.getHeight())
+            ) {
+                drawAt(canvas, x, topLeftY + room.getHeight(), ftxui::Color::Red);
             }
         }
     }
@@ -249,7 +279,7 @@ static void drawRoom(
 static ftxui::Element drawHUD(
     const Room& room,
     const Player& player,
-    const std::unordered_map<int32_t, ItemInfo>& itemsDict
+    int32_t selectedInventorySlot
 ) {
     // health / maxHealth | attack
     // standing on (item)
@@ -260,57 +290,98 @@ static ftxui::Element drawHUD(
     using namespace std::string_literals;
     using namespace ftxui;
 
+    auto& itemsDict = getItemsDict();
+
     std::stringstream ss;
-    ss << "Health: " << player.health << " / " << player.maxHealth
+    ss << "Health: " << player.getHealth() << " / " << player.getMaxHealth()
        << " | Base Attack Dice:";
-    for (const auto& v : player.baseAttackDice) {
-        ss << " " << v;
+    for (const auto& v : player.getBaseAttackDice()) {
+        ss << " " << v.second;
     }
 
 
-    std::string onGroundStr = "Nothing";
-    auto it = room.items.find({player.x, player.y});
-    if (it != room.items.end()) {
-        onGroundStr = itemsDict.at(it->second).name;
-    }
 
-    auto nameOrNothing = [&](const auto& v){
-        return v ? itemsDict.at(v.value()).name : "Nothing"s;
+    auto getItemStr = [&](int32_t itemID) {
+        const auto& item = itemsDict.at(itemID);
+        std::string res = item.getName();
+        res += " |";
+        if (item.hasAttackDice()) {
+            for (const auto& [_, desc] : item.getAttackDice()) {
+                res += " " + desc;
+            }
+        }
+        if (item.hasDefenseDice()) {
+            res += " |";
+            for (const auto& [_, desc] : item.getDefenseDice()) {
+                res += " " + desc;
+            }
+        }
+        return res;
     };
 
-    std::string handStr = nameOrNothing(player.hand);
-    std::string headStr = nameOrNothing(player.head);
-    std::string torsoStr = nameOrNothing(player.torso);
-    std::string legsStr = nameOrNothing(player.legs);
-    std::string feetStr = nameOrNothing(player.feet);
+    std::string onGroundStr = "Nothing";
+    auto it = room.getItems().find({room.getPlayerX(), room.getPlayerY()});
+    if (it != room.getItems().end()) {
+        onGroundStr = getItemStr(it->second); // itemsDict.at(it->second).getName();
+    }
+
+    using enum Player::EquipmentSlot;
+    static const std::unordered_map<Player::EquipmentSlot, std::string> eqSlotToName = {
+        { HAND, "Hand" },
+        { HEAD, "Head" },
+        { TORSO, "Torso" },
+        { LEGS, "Legs" },
+        { FEET, "Feet" }
+    };
 
     auto vb = vbox({
         text(ss.str()),
         separator(),
         text("On ground: " + onGroundStr),
         separator(),
-        text("Equipped:"),
-        text((player.selectedInventorySlot == 0 ? " ->"s : "   "s) + " Hand:  " + handStr),
-        text((player.selectedInventorySlot == 1 ? " ->"s : "   "s) + " Head:  " + headStr),
-        text((player.selectedInventorySlot == 2 ? " ->"s : "   "s) + " Torso: " + torsoStr),
-        text((player.selectedInventorySlot == 3 ? " ->"s : "   "s) + " Legs:  " + legsStr),
-        text((player.selectedInventorySlot == 4 ? " ->"s : "   "s) + " Feet:  " + feetStr),
+        text("Equipped:")
+    });
+
+    for (int32_t i = 0; auto& eqSlot : player.getEquipment()) {
+        vb = vbox({
+            vb,
+            text(
+                (i == selectedInventorySlot ?  " -> "s : "    "s) +
+                eqSlotToName.at(static_cast<Player::EquipmentSlot>(i)) +
+                ": "s +
+                (eqSlot.has_value() ? getItemStr(eqSlot.value()) : ""s)
+            )
+        });
+        ++i;
+    }
+
+    vb = vbox({
+        vb,
         separator(),
         text("Inventory:")
     });
-    for (int32_t i = 5; auto item : player.inventory) {
-        if (i == player.selectedInventorySlot) {
-            vb = vbox({vb, text(" -> " + itemsDict.at(item).name)});
+    for (
+        int32_t i = static_cast<int32_t>(N_WEAR_TYPES);
+        auto slot : player.getInventory()
+    ) {
+        std::string prefix = i == selectedInventorySlot ? " -> "s : "    "s;
+        if (!slot) {
+            vb = vbox({vb, text(prefix)});
         } else {
-            vb = vbox({vb, text("    " + itemsDict.at(item).name)});
+            auto itemStr = getItemStr(slot.value());
+            if (i == selectedInventorySlot) {
+                vb = vbox({vb, text(prefix + itemStr)});
+            } else {
+                vb = vbox({vb, text(prefix + itemStr)});
+            }
         }
         ++i;
     }
-    return vb;
+    return vbox({vb, separator()});
 }
 
 
-bool Renderer::render(
+void Renderer::render(
     const std::string& title,
     int32_t selectedOption,
     const std::span<std::string>& options
@@ -327,5 +398,4 @@ bool Renderer::render(
         ++i;
     }
     new(data_) Element(std::move(e));
-    return true;
 }

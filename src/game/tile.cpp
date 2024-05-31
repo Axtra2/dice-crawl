@@ -1,9 +1,8 @@
-#include <tile.hpp>
+#include <game/tile.hpp>
 
 const std::unordered_map<TileID, TileInfo>& getTilesDict() {
     static const std::unordered_map<TileID, TileInfo> dict_ = {
-        { TileInfo::EMPTY, { .w = 1.0 } },
-        { '#', { .w = 0.1 } },
+        { '#', { .w = 0.1, .isWall = true } }
     };
     return dict_;
 }

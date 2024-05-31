@@ -6,8 +6,8 @@
 using TileID = int32_t;
 
 struct TileInfo {
-    static constexpr TileID EMPTY = 0;
     double w = 0.0;
+    bool isWall = false;
 };
 
 const std::unordered_map<TileID, TileInfo>& getTilesDict();

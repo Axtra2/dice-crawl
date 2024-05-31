@@ -2,12 +2,12 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 
-#include <renderer.hpp>
-#include <game.hpp>
+#include <platform/renderer.hpp>
+#include <game/program.hpp>
 
 int main() {
-    Game game;
-    game.init();
+    Program program;
+    program.init();
 
     auto screen = ftxui::ScreenInteractive::Fullscreen();
     screen.TrackMouse(false);
@@ -16,9 +16,9 @@ int main() {
     auto renderer = ftxui::Renderer([&] {
         alignas(ftxui::Element) char data[sizeof(ftxui::Element)];
         Renderer myRenderer(data);
-        if (!game.render(myRenderer)) {
-            return ftxui::text("Rendering error");
-        }
+
+        program.render(myRenderer);
+
         ftxui::Element* res_ptr = reinterpret_cast<ftxui::Element*>(data);
         ftxui::Element res = std::move(*res_ptr);
         std::destroy_at(res_ptr);
@@ -30,9 +30,12 @@ int main() {
             return false;
         }
         std::string input = e.character();
-        if (!game.update(input.back())) {
+
+        program.update(input.back());
+        if (program.finished()) {
             exit();
         }
+
         return false;
     });
 

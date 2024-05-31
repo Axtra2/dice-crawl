@@ -1,119 +1,57 @@
 #pragma once
 
-#include <tile.hpp>
-#include <item.hpp>
-#include <mob.hpp>
+#include <game/character/mob/mob.hpp>
 
 #include <unordered_map>
-#include <cassert>
+#include <iostream>
+#include <optional>
 #include <cstdint>
-#include <random>
-#include <memory>
+#include <vector>
+#include <span>
 #include <map>
 
-struct Room {
-    int32_t id = 0;
-    int32_t layer = 0;
+class Room {
+public:
+    int32_t getWidth() const;
+    int32_t getHeight() const;
 
-    int32_t width = 0;
-    int32_t height = 0;
+    int32_t getPlayerX() const;
+    void setPlayerX(int32_t x);
 
-    std::map<std::pair<int32_t, int32_t>, TileID> tiles;
-    std::map<std::pair<int32_t, int32_t>, ItemID> items;
+    int32_t getPlayerY() const;
+    void setPlayerY(int32_t y);
 
-    std::unordered_map<int32_t, Mob> mobs;
-    std::map<std::pair<int32_t, int32_t>, int32_t> locationToMob;
+    bool isDoor(int32_t x, int32_t y) const;
+    bool isPassable(int32_t x, int32_t y) const;
 
-    // neighbouring rooms
-    std::optional<int32_t> n = std::nullopt;
-    std::optional<int32_t> s = std::nullopt;
-    std::optional<int32_t> w = std::nullopt;
-    std::optional<int32_t> e = std::nullopt;
+    void relocateMob(
+        int32_t fromX, int32_t fromY,
+        int32_t toX, int32_t toY
+    );
+    void updateMobs(Player& player);
+    const std::unordered_map<int32_t, Mob>& getMobs() const;
+    std::unordered_map<int32_t, Mob>& getMobs();
+    std::optional<int32_t> mobAt(int32_t x, int32_t y) const;
+    std::optional<int32_t> mobAt(int32_t x, int32_t y);
+
+    std::optional<int32_t> removeItem(int32_t x, int32_t y);
+
+    void generate(int32_t width, int32_t height);
+    void generate();
+    bool load(std::istream& in);
+
+    const std::map<std::pair<int32_t, int32_t>, int32_t>& getTiles() const;
+    const std::map<std::pair<int32_t, int32_t>, int32_t>& getItems() const;
+
+private:
+    int32_t width_ = 0;
+    int32_t height_ = 0;
+    std::map<std::pair<int32_t, int32_t>, int32_t> tiles_;
+    std::map<std::pair<int32_t, int32_t>, int32_t> items_;
+
+    std::unordered_map<int32_t, Mob> mobs_;
+    std::map<std::pair<int32_t, int32_t>, int32_t> locationToMob_;
+
+    int32_t playerX_ = 0;
+    int32_t playerY_ = 0;
 };
-
-template<typename RNG>
-Room generateRoom(
-    int32_t width,
-    int32_t height,
-    RNG& rng,
-    const std::unordered_map<TileID, TileInfo>& tilesDict = getTilesDict(),
-    const std::unordered_map<ItemID, ItemInfo>& itemsDict = getItemsDict()
-) {
-    assert(width >= 0);
-    assert(height >= 0);
-    assert(width % 2 == 1);
-    assert(height % 2 == 1);
-
-    Room room;
-    room.width = width;
-    room.height = height;
-
-    // tiles
-    const std::vector<TileID> iToTileID = [&](){
-        std::vector<TileID> iToTileID;
-        iToTileID.reserve(tilesDict.size());
-        for (const auto& [id, _] : tilesDict) {
-            iToTileID.push_back(id);
-        }
-        return iToTileID;
-    }();
-    std::discrete_distribution tileDis = [&](){
-        std::vector<double> ws;
-        ws.reserve(tilesDict.size());
-        for (const auto& [_, v] : tilesDict) {
-            ws.push_back(v.w);
-        }
-        return std::discrete_distribution(ws.begin(), ws.end());
-    }();
-
-    // items
-    static const std::vector<ItemID> iToItemID = [&](){
-        std::vector<ItemID> iToItemID;
-        iToItemID.reserve(itemsDict.size());
-        for (const auto& [id, _] : itemsDict) {
-            iToItemID.push_back(id);
-        }
-        return iToItemID;
-    }();
-    std::discrete_distribution itemDis = [&](){
-        std::vector<double> ws;
-        ws.reserve(itemsDict.size());
-        for (const auto& [_, v] : itemsDict) {
-            ws.push_back(v.w);
-        }
-        return std::discrete_distribution(ws.begin(), ws.end());
-    }();
-
-    // mobs
-    std::discrete_distribution mobSpawnDis({1.0, 0.01});
-    std::discrete_distribution mobTypeDis(Mob::ws.begin(), Mob::ws.end());
-
-    for (int32_t y = 0; y < height; ++y) {
-        for (int32_t x = 0; x < width; ++x) {
-            TileID tileID = iToTileID[tileDis(rng)];
-            if (tileID != TileInfo::EMPTY &&
-                x != width / 2 && y != height / 2 // force way between exits
-            ) {
-                room.tiles[{x,y}] = tileID;
-                continue; // do not add items over non-empty tiles
-            }
-
-            ItemID itemID = iToItemID[itemDis(rng)];
-            if (itemID != ItemInfo::EMPTY) {
-                room.items[{x,y}] = itemID;
-            }
-
-            if (mobSpawnDis(rng) == 1) {
-                int32_t mobID = static_cast<int32_t>(room.mobs.size());
-                room.mobs[mobID] = {
-                    .x = x,
-                    .y = y,
-                    .behaviour = static_cast<Mob::Behaviour>(mobTypeDis(rng))
-                };
-                room.locationToMob[{x,y}] = mobID;
-            }
-        }
-    }
-
-    return room;
-}

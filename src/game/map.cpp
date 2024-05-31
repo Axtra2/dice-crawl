@@ -1,74 +1,90 @@
-#include <files.hpp>
-#include <room.hpp>
-#include <map.hpp>
+#include <platform/files.hpp>
+#include <game/direction.hpp>
+#include <game/map.hpp>
 
+#include <optional>
 #include <cassert>
+#include <cstddef>
 #include <sstream>
 
-void print_graph(std::ostream& os, const Map& m) {
-    for (int layer = 0; layer < m.num_layers; ++layer) {
-        os << "Layer " << layer << ":\n";
-        for (const auto& node : m.layers[layer]) {
-            os << "  Node " << node << " connects to [";
-            os << "w: " << m.rooms[node].w.value_or(-1) << ", n: " << m.rooms[node].n.value_or(-1) << ", e: " << m.rooms[node].e.value_or(-1);
-            os << "]\n";
-        }
-    }
+const Room& Map::currentRoom() const {
+    assert(rooms_.size() > 0);
+    return rooms_[currentRoom_];
 }
 
-std::optional<Map> loadMap(const char* filename) {
+Room& Map::currentRoom() {
+    assert(rooms_.size() > 0);
+    return rooms_[currentRoom_];
+}
+
+bool Map::currentRoomHasNeighbour(Direction direction) const {
+    auto& neighbours = neighbours_[currentRoom_];
+    return neighbours[static_cast<size_t>(direction)].has_value();
+}
+
+void Map::goToNeighbour(Direction direction) {
+    assert(currentRoomHasNeighbour(direction));
+    auto& neighbours = neighbours_[currentRoom_];
+    currentRoom_ = neighbours[static_cast<size_t>(direction)].value();
+    auto& room = rooms_[currentRoom_];
+    room.setPlayerX(room.getWidth() / 2);
+    room.setPlayerY(room.getHeight() - 1);
+}
+
+void Map::generate() {
+    rooms_.clear();
+    Room room;
+    room.generate();
+    rooms_.push_back(std::move(room));
+    neighbours_.assign(1, {});
+}
+
+bool Map::load(const char* filename) {
     auto data = getFileContents(filename);
     if (!data) {
-        return std::nullopt;
+        return false;
     }
-    std::stringstream ss(data.value());
+    std::stringstream ss = std::stringstream(data.value());
+    return load(ss);
+}
 
+bool Map::load(std::istream& in) {
+    if (!in) {
+        return false;
+    }
     int32_t nRooms;
-    ss >> nRooms;
+    in >> nRooms;
 
-    Map map = { .rooms = std::vector<Room>(nRooms) };
+    rooms_.assign(nRooms, Room());
+    neighbours_.assign(nRooms, {});
 
     for (int32_t roomI = 0; roomI < nRooms; ++roomI) {
-        Room& room = map.rooms[roomI];
-        ss >> room.width >> room.height;
-
-        int32_t nTiles;
-        ss >> nTiles;
-        for (int32_t tileI = 0; tileI < nTiles; ++tileI) {
-            int32_t x, y, tileID;
-            ss >> x >> y >> tileID;
-            room.tiles[{x,y}] = tileID;
-        }
-        int32_t nItems;
-        ss >> nItems;
-        for (int32_t itemI = 0; itemI < nItems; ++itemI) {
-            int32_t x, y, itemID;
-            ss >> x >> y >> itemID;
-            room.items[{x,y}] = itemID;
-        }
+        rooms_[roomI].load(in);
 
         char c;
         int32_t e, n, w, s;
-        ss >> c >> e;
+        in >> c >> e;
         assert(c == 'e');
-        ss >> c >> n;
+        in >> c >> n;
         assert(c == 'n');
-        ss >> c >> w;
+        in >> c >> w;
         assert(c == 'w');
-        ss >> c >> s;
+        in >> c >> s;
         assert(c == 's');
+
+        using enum Direction;
         if (e != -1) {
-            room.e = e;
+            neighbours_[roomI][static_cast<size_t>(EAST)] = e;
         }
         if (n != -1) {
-            room.n = n;
+            neighbours_[roomI][static_cast<size_t>(NORTH)] = n;
         }
         if (w != -1) {
-            room.w = w;
+            neighbours_[roomI][static_cast<size_t>(WEST)] = w;
         }
         if (s != -1) {
-            room.s = s;
+            neighbours_[roomI][static_cast<size_t>(SOUTH)] = s;
         }
     }
-    return map;
+    return true;
 }

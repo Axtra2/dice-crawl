@@ -18,31 +18,32 @@ SET(DICE_CRAWL_SRCS
   ${CMAKE_SOURCE_DIR}/src/platform/renderer.cpp
   ${CMAKE_SOURCE_DIR}/src/platform/files.cpp
 
-
-  ${CMAKE_SOURCE_DIR}/src/game/main_menu.cpp
-  ${CMAKE_SOURCE_DIR}/src/game/esc_menu.cpp
-  ${CMAKE_SOURCE_DIR}/src/game/roaming.cpp
-  ${CMAKE_SOURCE_DIR}/src/game/player.cpp
-  ${CMAKE_SOURCE_DIR}/src/game/game.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/program_mode/main_menu.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/program_mode/esc_menu.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/program_mode/game.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/program_mode/menu.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/character/mob/hostile.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/character/mob/passive.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/character/mob/coward.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/character/mob/mob.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/character/character.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/character/player.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/direction.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/program.cpp
   ${CMAKE_SOURCE_DIR}/src/game/item.cpp
   ${CMAKE_SOURCE_DIR}/src/game/tile.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/room.cpp
   ${CMAKE_SOURCE_DIR}/src/game/map.cpp
-  ${CMAKE_SOURCE_DIR}/src/game/mob.cpp
-
 
   ${CMAKE_SOURCE_DIR}/src/utils/random.cpp
 )
 
-set(DICE_CRAWL_INCLUDE
-  ${CMAKE_SOURCE_DIR}/src/game
-  ${CMAKE_SOURCE_DIR}/src/utils
-  ${CMAKE_SOURCE_DIR}/src/platform
-)
+set(DICE_CRAWL_INCLUDE ${CMAKE_SOURCE_DIR}/src)
 
 set(DICE_CRAWL_LIBS
+  ftxui::component
   ftxui::screen
   ftxui::dom
-  ftxui::component
 )
 
 add_executable(roguelike
@@ -53,7 +54,7 @@ target_link_libraries(roguelike PRIVATE ${DICE_CRAWL_LIBS})
 target_include_directories(roguelike PRIVATE ${DICE_CRAWL_INCLUDE})
 set_property(TARGET roguelike PROPERTY CXX_STANDARD 20)
 
-configure_file("map.txt" "map.txt" COPYONLY)
+configure_file("saves/map.txt" "saves/map.txt" COPYONLY)
 
 
 add_subdirectory(tests)

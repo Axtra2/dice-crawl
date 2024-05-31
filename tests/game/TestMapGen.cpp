@@ -3,10 +3,10 @@
 #include <cassert>
 #include <iostream>
 
-#include "map.hpp"
+// #include "map.hpp"
 
 int main() {
-    MapGenerator mg;
-    Map m = mg.generate_graph(7);
-    print_graph(std::cout, m);
+    // MapGenerator mg;
+    // Map m = mg.generate_graph(7);
+    // print_graph(std::cout, m);
 }

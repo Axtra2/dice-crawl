@@ -1,9 +1,10 @@
 #pragma once
 
-#include <player.hpp>
-#include <item.hpp>
-#include <room.hpp>
-#include <tile.hpp>
+// #include <game/character/player.hpp>
+// #include <item.hpp>
+// #include <game/room.hpp>
+// #include <game/map.hpp>
+// #include <tile.hpp>
 
 #include <unordered_map>
 #include <cstdint>
@@ -13,18 +14,20 @@
 #include <span>
 #include <map>
 
+class Player;
+class Map;
+
 class Renderer {
 public:
     Renderer(void* result);
 
-    bool render(
-        const Room& room,
+    void render(
+        const Map& map,
         const Player& player,
-        const std::unordered_map<int32_t, TileInfo>& tilesDict = getTilesDict(),
-        const std::unordered_map<int32_t, ItemInfo>& itemsDict = getItemsDict()
+        int32_t selectedInventorySlot
     );
 
-    bool render(
+    void render(
         const std::string& title,
         int32_t selectedOption,
         const std::span<std::string>& options
