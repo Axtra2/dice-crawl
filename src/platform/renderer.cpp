@@ -347,7 +347,7 @@ static ftxui::Element drawHUD(
         onGroundStr = getItemStr(it->second);
     }
 
-    using enum Player::EquipmentSlot;
+    using enum ItemInfo::WearInfo::WearType;
     static const std::unordered_map<Player::EquipmentSlot, std::string> eqSlotToName = {
         { HAND, "Hand" },
         { HEAD, "Head" },
