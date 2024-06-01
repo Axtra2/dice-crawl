@@ -19,3 +19,7 @@ const Dice<int32_t>& Character::getBaseAttackDice() const {
 const Dice<int32_t>& Character::getBaseDefenseDice() const {
     return baseDefenseDice_;
 }
+
+int32_t Character::getXP() const {
+    return xp_;
+}

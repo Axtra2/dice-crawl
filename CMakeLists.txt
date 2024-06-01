@@ -13,13 +13,14 @@ project(roguelike LANGUAGES CXX VERSION 1.0.0)
 include(CTest)
 enable_testing()
 
-
 SET(DICE_CRAWL_SRCS
   ${CMAKE_SOURCE_DIR}/src/platform/renderer.cpp
   ${CMAKE_SOURCE_DIR}/src/platform/files.cpp
 
+  ${CMAKE_SOURCE_DIR}/src/game/program_mode/game_over.cpp
   ${CMAKE_SOURCE_DIR}/src/game/program_mode/main_menu.cpp
   ${CMAKE_SOURCE_DIR}/src/game/program_mode/esc_menu.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/program_mode/level_up.cpp
   ${CMAKE_SOURCE_DIR}/src/game/program_mode/game.cpp
   ${CMAKE_SOURCE_DIR}/src/game/program_mode/menu.cpp
   ${CMAKE_SOURCE_DIR}/src/game/character/mob/hostile.cpp

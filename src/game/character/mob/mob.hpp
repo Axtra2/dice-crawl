@@ -22,19 +22,27 @@ public:
     };
 
 public:
+    MobStrategy(std::string_view name);
+
     virtual Action pickAction(const Mob& mob, const Room& room) = 0;
-    virtual const std::string& getStrategyName() const = 0;
+
+    const std::string& getName() const;
+
     static std::shared_ptr<MobStrategy> genMobStrat();
+
+private:
+    std::string name_;
 };
 
 class Mob : public Character {
 public:
     using Action = MobStrategy::Action;
+    Mob();
     void receiveAttack(int32_t damage) override;
     Action pickAction(const Room& room);
-    void executeAction(Action action, Room& room, Player& player);
+    void executeAction(Action action, Room& room);
     const std::string& getStrategyName() const;
-    void move(Room& Room, Player& player, Direction direction);
+    void move(Room& Room, Direction direction);
     int32_t getX() const;
     int32_t getY() const;
     void setX(int32_t x);

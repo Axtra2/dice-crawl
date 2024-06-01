@@ -6,6 +6,7 @@
 #include <game/map.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <utility>
 
@@ -26,20 +27,20 @@ void Player::receiveAttack(int32_t damage) {
     addInRange(health_, -damage, 0, maxHealth_);
 }
 
-void Player::move(Map& map, Direction direction) {
+bool Player::move(Map& map, Direction direction) {
     auto [dx, dy] = dirToDXDY[static_cast<size_t>(direction)];
     Room& room = map.currentRoom();
     int32_t x = room.getPlayerX() + dx;
     int32_t y = room.getPlayerY() + dy;
     if (room.isDoor(x, y) && map.currentRoomHasNeighbour(direction)) {
         map.goToNeighbour(direction);
-        return;
+        return true;
     }
     if (!room.isPassable(x, y)) {
-        return;
+        return false;
     }
-    auto mobID = room.mobAt(x, y);
-    if (mobID) {
+    Character* otherCharacter = room.characterAt(x, y);
+    if (otherCharacter != nullptr) {
         int32_t attack = throwDice(baseAttackDice_);
         for (auto eq : equipment_) {
             if (!eq) {
@@ -52,70 +53,77 @@ void Player::move(Map& map, Direction direction) {
             const auto& dice = item.getAttackDice();
             attack = throwDice(dice)(attack);
         }
-        room.getMobs()[mobID.value()].receiveAttack(attack);
-        return;
+        otherCharacter->receiveAttack(attack);
+        if (otherCharacter->isDead()) {
+            xp_ += otherCharacter->getXP();
+        }
+        return true;
     }
     room.setPlayerX(x);
     room.setPlayerY(y);
+    return true;
 }
 
-void Player::pickUp(Room& room) {
+bool Player::pickUp(Room& room) {
     if (nItemsInInventory_ >= N_INV_SLOTS) {
-        return;
+        return false;
     }
     int32_t x = room.getPlayerX();
     int32_t y = room.getPlayerY();
     auto item = room.removeItem(x, y);
     if (!item) {
-        return;
+        return false;
     }
     for (auto& slot : inventory_) {
         if (!slot) {
             slot = item.value();
             ++nItemsInInventory_;
-            return;
+            return true;
         }
     }
+    return false;
 }
 
-void Player::equip(int32_t inventorySlot) {
+bool Player::equip(int32_t inventorySlot) {
     assert(inventorySlot < inventory_.size());
     auto& invSlot = inventory_[inventorySlot];
     if (!invSlot) {
-        return;
+        return false;
     }
     int32_t itemID = invSlot.value();
     const ItemInfo& itemInfo = getItemsDict().at(itemID);
     if (!itemInfo.isWearable()) {
-        return;
+        return false;
     }
     int32_t eqSlotI = static_cast<int32_t>(itemInfo.getWearType());
     auto& eqSlot = equipment_[eqSlotI];
     if (eqSlot) {
-        return;
+        return false;
     }
     eqSlot = itemID;
     --nItemsInInventory_;
     inventory_[inventorySlot].reset();
+    return true;
 }
 
-void Player::unequip(EquipmentSlot eqSlot) {
+bool Player::unequip(EquipmentSlot eqSlot) {
     if (nItemsInInventory_ >= N_INV_SLOTS) {
-        return;
+        return false;
     }
     int32_t eqSlotI = static_cast<int32_t>(eqSlot);
     auto& slot = equipment_[eqSlotI];
     if (!slot) {
-        return;
+        return false;
     }
     for (auto& invSlot : inventory_) {
         if (!invSlot) {
             invSlot = slot.value();
             ++nItemsInInventory_;
             slot.reset();
-            return;
+            return true;
         }
     }
+    return false;
 }
 
 const std::array<std::optional<int32_t>, Player::N_EQ_SLOTS>&
@@ -126,4 +134,35 @@ Player::getEquipment() const {
 const std::array<std::optional<int32_t>, Player::N_INV_SLOTS>&
 Player::getInventory() const {
     return inventory_;
+}
+
+bool Player::canLevelUp() const {
+    return xp_ >= 1 << level_;
+}
+
+int32_t Player::getLevel() const {
+    return level_;
+}
+
+void Player::levelUp() {
+    assert(canLevelUp());
+    xp_ -= 1 << level_;
+    ++level_;
+}
+
+int32_t Player::getMaxHealth() const {
+    return maxHealth_;
+}
+
+void Player::setMaxHealth(int32_t maxHealth) {
+    maxHealth_ = maxHealth;
+}
+
+int32_t Player::getHealth() const {
+    return health_;
+}
+
+void Player::setHealth(int32_t health) {
+    assert(health <= maxHealth_);
+    health_ = health;
 }

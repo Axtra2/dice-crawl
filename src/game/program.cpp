@@ -1,5 +1,7 @@
+#include <game/program_mode/game_over.hpp>
 #include <game/program_mode/main_menu.hpp>
 #include <game/program_mode/esc_menu.hpp>
+#include <game/program_mode/level_up.hpp>
 #include <game/program_mode/game.hpp>
 #include <game/program.hpp>
 
@@ -49,6 +51,24 @@ void Program::toGame(Map map) {
     Game* game = dynamic_cast<Game*>(game_.get());
     assert(game != nullptr);
     game->setMap(std::move(map));
+}
+
+void Program::toGameOver() {
+    if (!gameOver_) {
+        gameOver_.reset(new GameOver);
+    }
+    mode_ = gameOver_;
+}
+
+void Program::toLevelUp(Player& player) {
+    if (!levelUp_) {
+        levelUp_.reset(new LevelUp(&player));
+    } else {
+        LevelUp* levelUp = dynamic_cast<LevelUp*>(levelUp_.get());
+        assert(levelUp != nullptr);
+        levelUp->setPlayer(&player);
+    }
+    mode_ = levelUp_;
 }
 
 void Program::finish() {

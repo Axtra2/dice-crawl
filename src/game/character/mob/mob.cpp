@@ -6,6 +6,18 @@
 #include <game/room.hpp>
 #include <utils/inrange.hpp>
 
+Mob::Mob() {
+    xp_ = 1;
+}
+
+MobStrategy::MobStrategy(std::string_view name)
+  : name_(name)
+{ }
+
+const std::string& MobStrategy::getName() const {
+    return name_;
+}
+
 void Mob::receiveAttack(int32_t damage) {
     addInRange(health_, -damage, 0, maxHealth_);
 }
@@ -17,11 +29,11 @@ Mob::Action Mob::pickAction(const Room& room) {
     return strategy_->pickAction(*this, room);
 }
 
-void Mob::executeAction(Action action, Room& room, Player& player) {
+void Mob::executeAction(Action action, Room& room) {
     switch (action.type) {
     using enum MobStrategy::ActionType;
     case MOVE:
-        move(room, player, std::get<Direction>(action.data));
+        move(room, std::get<Direction>(action.data));
         break;
     default:
         break;
@@ -31,22 +43,20 @@ void Mob::executeAction(Action action, Room& room, Player& player) {
     }
 }
 
-void Mob::move(Room& room, Player& player, Direction direction) {
+void Mob::move(Room& room, Direction direction) {
     auto [dx, dy] = dirToDXDY[static_cast<size_t>(direction)];
     int32_t targetX = x_ + dx;
     int32_t targetY = y_ + dy;
     if (!room.isPassable(targetX, targetY)) {
         return;
     }
-    if (targetX == room.getPlayerX() && targetY == room.getPlayerY()) {
+    Character* otherCharacter = room.characterAt(targetX, targetY);
+    if (otherCharacter != nullptr) {
         int32_t attack = throwDice(baseAttackDice_);
-        player.receiveAttack(attack);
-        return;
-    }
-    auto otherMobID = room.mobAt(targetX, targetY);
-    if (otherMobID) {
-        int32_t attack = throwDice(baseAttackDice_);
-        room.getMobs()[otherMobID.value()].receiveAttack(attack);
+        otherCharacter->receiveAttack(attack);
+        if (otherCharacter->isDead()) {
+            xp_ += otherCharacter->getXP();
+        }
         return;
     }
     room.relocateMob(x_, y_, targetX, targetY);
@@ -71,7 +81,7 @@ void Mob::setY(int32_t y) {
 }
 
 const std::string& Mob::getStrategyName() const {
-    return strategy_->getStrategyName();
+    return strategy_->getName();
 }
 
 void Mob::setStrategy(std::shared_ptr<MobStrategy> strategy) {

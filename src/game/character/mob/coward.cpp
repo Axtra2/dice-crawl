@@ -12,6 +12,6 @@ MobStrategy::Action Coward::pickAction(const Mob& mob, const Room& room) {
     return action;
 }
 
-const std::string& Coward::getStrategyName() const {
-    return name_;
-}
+Coward::Coward()
+  : MobStrategy("Coward")
+{ }

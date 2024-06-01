@@ -126,7 +126,6 @@ void Room::generate(int32_t width, int32_t height) {
             }
 
             if (mobSpawnDis(rng) == 1) {
-                int32_t mobID = static_cast<int32_t>(mobs_.size());
                 Mob mob;
                 switch (mobStratDis(rng)) {
                 case 0:
@@ -143,8 +142,8 @@ void Room::generate(int32_t width, int32_t height) {
                 }
                 mob.setX(x);
                 mob.setY(y);
-                mobs_[mobID] = std::move(mob);
-                locationToMob_[{x,y}] = mobID;
+                mobs_.push_back(std::move(mob));
+                locationToMob_[{x,y}] = mobs_.size() - 1;
             }
         }
     }
@@ -158,7 +157,7 @@ void Room::generate() {
     std::uniform_int_distribution widthDis(0, (MAX_ROOM_WIDTH - MIN_ROOM_WIDTH) / 2);
     std::uniform_int_distribution heightDis(0, (MAX_ROOM_HEIGHT - MIN_ROOM_HEIGHT) / 2);
     auto& rng = getRNG();
-    generate(MIN_ROOM_WIDTH + 2 * widthDis(rng), MAX_ROOM_WIDTH + 2 * heightDis(rng));
+    generate(MIN_ROOM_WIDTH + 2 * widthDis(rng), MIN_ROOM_HEIGHT + 2 * heightDis(rng));
 }
 
 
@@ -205,10 +204,10 @@ std::optional<int32_t> Room::removeItem(int32_t x, int32_t y) {
     return res;
 }
 
-void Room::updateMobs(Player& player) {
-    for (auto& [mobID, mob] : mobs_) {
+void Room::updateMobs() {
+    for (auto& mob : mobs_) {
         auto action = mob.pickAction(*this);
-        mob.executeAction(action, *this, player);
+        mob.executeAction(action, *this);
     }
 }
 
@@ -225,36 +224,45 @@ void Room::relocateMob(
     locationToMob_[{toX,toY}] = mobID;
 }
 
-const std::unordered_map<int32_t, Mob>& Room::getMobs() const {
+const std::vector<Mob>& Room::getMobs() const {
     return mobs_;
 }
 
-std::unordered_map<int32_t, Mob>& Room::getMobs() {
-    return mobs_;
+const Player& Room::player() const {
+    assert(player_ != nullptr);
+    return *player_;
 }
 
-std::optional<int32_t> Room::mobAt(int32_t x, int32_t y) const {
-    auto it = locationToMob_.find({x,y});
-    if (it == locationToMob_.end()) {
-        return std::nullopt;
-    }
-    const auto& mob = mobs_.at(it->second);
-    if (mob.isDead()) {
-        return std::nullopt;
-    }
-    return it->second;
+Player& Room::player() {
+    assert(player_ != nullptr);
+    return *player_;
 }
 
-std::optional<int32_t> Room::mobAt(int32_t x, int32_t y) {
+bool Room::hasPlayer() const {
+    return player_ != nullptr;
+}
+
+void Room::setPlayer(Player* player) {
+    player_ = player;
+}
+
+const Character* Room::characterAt(int32_t x, int32_t y) const {
+    if (x == playerX_ && y == playerY_) {
+        return player_;
+    }
     auto it = locationToMob_.find({x,y});
     if (it == locationToMob_.end()) {
-        return std::nullopt;
+        return nullptr;
     }
-    auto& mob = mobs_[it->second];
+    const Mob& mob = mobs_[it->second];
     if (mob.isDead()) {
-        mobs_.erase(it->second);
-        locationToMob_.erase(it);
-        return std::nullopt;
+        return nullptr;
     }
-    return it->second;
+    return &mob;
+}
+
+Character* Room::characterAt(int32_t x, int32_t y) {
+    return const_cast<Character*>(
+        static_cast<const Room*>(this)->characterAt(x, y)
+    );
 }

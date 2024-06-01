@@ -24,11 +24,16 @@ bool Map::currentRoomHasNeighbour(Direction direction) const {
 
 void Map::goToNeighbour(Direction direction) {
     assert(currentRoomHasNeighbour(direction));
+    auto& initRoom = rooms_[currentRoom_];
+    assert(initRoom.hasPlayer());
+    auto& player = initRoom.player();
     auto& neighbours = neighbours_[currentRoom_];
     currentRoom_ = neighbours[static_cast<size_t>(direction)].value();
     auto& room = rooms_[currentRoom_];
     room.setPlayerX(room.getWidth() / 2);
     room.setPlayerY(room.getHeight() - 1);
+    room.setPlayer(&player);
+    initRoom.setPlayer(nullptr);
 }
 
 void Map::generate() {

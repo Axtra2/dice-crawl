@@ -124,6 +124,19 @@ static void drawAt(
     canvas.DrawText(x * 2, y * 4, text, color);
 }
 
+static void drawBoldAt(
+    ftxui::Canvas& canvas,
+    int32_t x,
+    int32_t y,
+    const std::string& text,
+    ftxui::Color color
+) {
+    canvas.DrawText(x * 2, y * 4, text, [=](ftxui::Pixel& p){
+        p.foreground_color = color;
+        p.bold = true;
+    });
+}
+
 static void drawRoom(
     int32_t topLeftX,
     int32_t topLeftY,
@@ -169,7 +182,7 @@ static void drawRoom(
         ) {
             switch (v) {
             case 1: // sword
-                drawAt(canvas, x, y, ftxui::Color::Blue);
+                drawBoldAt(canvas, x, y, "\U000100C9", ftxui::Color::Blue);
                 break;
             case 2: // helmet
                 drawAt(canvas, x, y, ftxui::Color::Purple);
@@ -180,8 +193,20 @@ static void drawRoom(
         }
     }
 
+    // dead mobs
+    for (const auto& mob : room.getMobs()) {
+        int32_t x = mob.getX() + topLeftX;
+        int32_t y = mob.getY() + topLeftY;
+        if (x >= rect.left && x <= rect.right &&
+            y >= rect.top  && y <= rect.bottom &&
+            mob.isDead()
+        ) {
+            drawAt(canvas, x, y, "\U00002718"); // cross
+        }
+    }
+
     // mobs
-    for (auto& [mobID, mob] : room.getMobs()) {
+    for (const auto& mob : room.getMobs()) {
         int32_t x = mob.getX() + topLeftX;
         int32_t y = mob.getY() + topLeftY;
         if (x >= rect.left && x <= rect.right &&
@@ -189,7 +214,6 @@ static void drawRoom(
         ) {
             using namespace std::string_literals;
             if (mob.isDead()) {
-                drawAt(canvas, x, y, "X"s);
                 continue;
             }
             auto icon = mob.getStrategyName().substr(0, 1);
@@ -299,8 +323,6 @@ static ftxui::Element drawHUD(
         ss << " " << v.second;
     }
 
-
-
     auto getItemStr = [&](int32_t itemID) {
         const auto& item = itemsDict.at(itemID);
         std::string res = item.getName();
@@ -322,7 +344,7 @@ static ftxui::Element drawHUD(
     std::string onGroundStr = "Nothing";
     auto it = room.getItems().find({room.getPlayerX(), room.getPlayerY()});
     if (it != room.getItems().end()) {
-        onGroundStr = getItemStr(it->second); // itemsDict.at(it->second).getName();
+        onGroundStr = getItemStr(it->second);
     }
 
     using enum Player::EquipmentSlot;
