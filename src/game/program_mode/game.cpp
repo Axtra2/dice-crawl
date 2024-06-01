@@ -33,7 +33,7 @@ void Game::update(Program& program, char c) {
     case 'd': actionSuccess = player_.move(map_, EAST); break;
     case 'p': actionSuccess = player_.pickUp(map_.currentRoom()); break;
     case 'e': {
-        using enum Player::EquipmentSlot;
+        using enum ItemInfo::WearInfo::WearType;
         int32_t nEqSlots = static_cast<int32_t>(N_WEAR_TYPES);
         if (selectedInventorySlot_ < nEqSlots) {
             actionSuccess = player_.unequip(
