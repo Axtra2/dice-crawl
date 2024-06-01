@@ -87,7 +87,3 @@ const std::string& Mob::getStrategyName() const {
 void Mob::setStrategy(std::shared_ptr<MobStrategy> strategy) {
     strategy_ = strategy;
 }
-
-std::shared_ptr<MobStrategy> MobStrategy::genMobStrat() {
-    return std::shared_ptr<MobStrategy>(new Hostile());
-}

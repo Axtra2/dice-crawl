@@ -150,16 +150,8 @@ void Player::levelUp() {
     ++level_;
 }
 
-int32_t Player::getMaxHealth() const {
-    return maxHealth_;
-}
-
 void Player::setMaxHealth(int32_t maxHealth) {
     maxHealth_ = maxHealth;
-}
-
-int32_t Player::getHealth() const {
-    return health_;
 }
 
 void Player::setHealth(int32_t health) {

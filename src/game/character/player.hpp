@@ -28,10 +28,8 @@ public:
     int32_t getLevel() const;
     void levelUp();
 
-    int32_t getMaxHealth() const;
     void setMaxHealth(int32_t maxHealth);
 
-    int32_t getHealth() const;
     void setHealth(int32_t health);
 
     const std::array<std::optional<int32_t>, N_EQ_SLOTS>& getEquipment() const;

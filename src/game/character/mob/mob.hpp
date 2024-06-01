@@ -28,8 +28,6 @@ public:
 
     const std::string& getName() const;
 
-    static std::shared_ptr<MobStrategy> genMobStrat();
-
 private:
     std::string name_;
 };

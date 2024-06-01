@@ -9,6 +9,7 @@ class Map;
 class Character {
 public:
     virtual void receiveAttack(int32_t damage) = 0;
+    virtual ~Character() = default;
     bool isDead() const;
 
     int32_t getMaxHealth() const;
