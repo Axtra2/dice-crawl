@@ -26,7 +26,8 @@ public:
     bool unequip(EquipmentSlot eqSlot);
     bool canLevelUp() const;
     int32_t getLevel() const;
-    void levelUp();
+    void oneLevelUp();
+    static uint64_t xpForLevelUp(int32_t currentLevel);
 
     void setMaxHealth(int32_t maxHealth);
 

@@ -316,11 +316,22 @@ static ftxui::Element drawHUD(
 
     auto& itemsDict = getItemsDict();
 
-    std::stringstream ss;
-    ss << "Health: " << player.getHealth() << " / " << player.getMaxHealth()
-       << " | Base Attack Dice:";
+    std::stringstream healthSS;
+    healthSS << "Health: "
+             << player.getHealth()
+             << " / "
+             << player.getMaxHealth();
+
+    std::stringstream attackDiceSS;
+    attackDiceSS << "Base Attack Dice: ";
     for (const auto& v : player.getBaseAttackDice()) {
-        ss << " " << v.second;
+        attackDiceSS << " " << v.second;
+    }
+
+    std::stringstream defenseDiceSS;
+    defenseDiceSS << "Base Defense Dice:";
+    for (const auto& v : player.getBaseDefenseDice()) {
+        defenseDiceSS << " " << v.second;
     }
 
     auto getItemStr = [&](int32_t itemID) {
@@ -356,8 +367,22 @@ static ftxui::Element drawHUD(
         { FEET, "Feet" }
     };
 
+    std::stringstream xpSS;
+    xpSS << "XP: "
+         << player.getXP()
+         << " / "
+         << Player::xpForLevelUp(player.getLevel())
+         << " | Level: "
+         << player.getLevel();
+
     auto vb = vbox({
-        text(ss.str()),
+        hbox({
+            text(healthSS.str()),
+            separator(),
+            vbox({text(attackDiceSS.str()), text(defenseDiceSS.str())})
+        }),
+        separator(),
+        text(xpSS.str()),
         separator(),
         text("On ground: " + onGroundStr),
         separator(),

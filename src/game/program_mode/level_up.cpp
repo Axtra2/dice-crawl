@@ -1,9 +1,13 @@
 #include <game/program_mode/level_up.hpp>
 #include <game/character/player.hpp>
 #include <game/program.hpp>
+#include <utils/random.hpp>
 
 #include <cassert>
+#include <cstddef>
 #include <sstream>
+#include <random>
+#include <string>
 
 const std::pair<
     const std::vector<std::string>&,
@@ -16,13 +20,31 @@ getLevelRewardOptions(int32_t levelReached) {
     > levelRewardNames_ = {
         { // for reaching level 1
             "Max Health + 1",
+            "Random side of Base Attack Dice + 1",
+            "Random side of Base Defense Dice + 1"
         }
     };
     static const std::vector<
         std::vector<std::function<void(Player&)>>
     > levelRewardActions_ = {
         { // for reaching level 1
-            [](Player& player){ player.setMaxHealth(player.getMaxHealth() + 1); }
+            [](Player& player){ player.setMaxHealth(player.getMaxHealth() + 1); },
+            [](Player& player){
+                auto& dice = player.getBaseAttackDiceMut();
+                assert(!dice.empty());
+                std::uniform_int_distribution<size_t> dis(0, dice.size() - 1);
+                size_t i = dis(getRNG());
+                ++dice[i].first;
+                dice[i].second = std::to_string(dice[i].first);
+            },
+            [](Player& player){
+                auto& dice = player.getBaseDefenseDiceMut();
+                assert(!dice.empty());
+                std::uniform_int_distribution<size_t> dis(0, dice.size() - 1);
+                size_t i = dis(getRNG());
+                ++dice[i].first;
+                dice[i].second = std::to_string(dice[i].first);
+            }
         }
     };
     assert(levelRewardNames_.size() == levelRewardActions_.size());
@@ -61,7 +83,7 @@ void LevelUp::setPlayer(Player* player) {
             optionActionsBuffer_.push_back(
                 [&](Program& program){
                     assert(player_);
-                    player_->levelUp();
+                    player_->oneLevelUp();
                     action(*player_);
                     player_->setHealth(player_->getMaxHealth());
                     if (player_->canLevelUp()) {

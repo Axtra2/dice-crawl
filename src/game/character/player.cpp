@@ -137,16 +137,20 @@ Player::getInventory() const {
 }
 
 bool Player::canLevelUp() const {
-    return xp_ >= 1 << level_;
+    return xp_ >= xpForLevelUp(level_);
 }
 
 int32_t Player::getLevel() const {
     return level_;
 }
 
-void Player::levelUp() {
+uint64_t Player::xpForLevelUp(int32_t currentLevel) {
+    return 1ull << currentLevel;
+}
+
+void Player::oneLevelUp() {
     assert(canLevelUp());
-    xp_ -= 1 << level_;
+    xp_ -= xpForLevelUp(level_);
     ++level_;
 }
 
