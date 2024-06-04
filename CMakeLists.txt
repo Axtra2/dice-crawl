@@ -47,9 +47,14 @@ set(DICE_CRAWL_LIBS
   ftxui::dom
 )
 
+add_library(roguelike_objects OBJECT ${DICE_CRAWL_SRCS})
+target_include_directories(roguelike_objects PRIVATE ${DICE_CRAWL_INCLUDE})
+target_link_libraries(roguelike_objects PRIVATE ${DICE_CRAWL_LIBS})
+set_property(TARGET roguelike_objects PROPERTY CXX_STANDARD 20)
+
 add_executable(roguelike
   src/platform/main.cpp
-  ${DICE_CRAWL_SRCS}
+  $<TARGET_OBJECTS:roguelike_objects>
 )
 target_link_libraries(roguelike PRIVATE ${DICE_CRAWL_LIBS})
 target_include_directories(roguelike PRIVATE ${DICE_CRAWL_INCLUDE})
