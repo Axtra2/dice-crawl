@@ -1,6 +1,8 @@
 #include <game/character/player.hpp>
+#include <game/direction.hpp>
 #include <game/room.hpp>
 #include <game/item.hpp>
+#include <game/map.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -45,6 +47,46 @@ void testHealth() {
     p.setHealth(2);
     assert(p.getMaxHealth() == 1);
     assert(p.getHealth() == 1);
+}
+
+void testXP() {
+    Player p;
+    assert(p.getLevel() == 0);
+    p.setXP(Player::xpForLevelUp(p.getLevel()));
+    assert(p.canLevelUp());
+    p.oneLevelUp();
+    assert(p.getXP() == 0);
+    assert(p.getLevel() == 1);
+    if (Player::xpForLevelUp(p.getLevel()) > 0) {
+        assert(!p.canLevelUp());
+    }
+}
+
+void testMove() {
+    Map m;
+    m.load("assets/map.txt");
+    Player p;
+    auto& room = m.currentRoom();
+    room.setPlayer(&p);
+    room.setPlayerX(room.getWidth() / 2);
+    room.setPlayerY(room.getHeight() - 1);
+
+    int32_t x = room.getPlayerX();
+    int32_t y = room.getPlayerY();
+    while (y > 0) {
+        p.move(m, Direction::NORTH);
+        assert(room.getPlayerY() == y - 1);
+        --y;
+    }
+    if (m.currentRoomHasNeighbour(Direction::NORTH)) {
+        p.move(m, Direction::NORTH);
+        assert(m.currentRoom().getPlayerX() == m.currentRoom().getWidth() / 2);
+        assert(m.currentRoom().getPlayerY() == m.currentRoom().getHeight() - 1);
+    } else {
+        p.move(m, Direction::NORTH);
+        assert(m.currentRoom().getPlayerX() == x);
+        assert(m.currentRoom().getPlayerY() == y);
+    }
 }
 
 void testPickUp() {
@@ -106,4 +148,6 @@ int main() {
     testHealth();
     testPickUp();
     testEquip();
+    testXP();
+    testMove();
 }
