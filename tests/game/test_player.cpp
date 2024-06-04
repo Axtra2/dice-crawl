@@ -53,10 +53,6 @@ void testPickUp() {
         0
         1
         0 0 1
-        e -1
-        n -1
-        w -1
-        s -1
     )");
     Room room;
     room.load(ss);
@@ -80,12 +76,8 @@ void testEquip() {
             1 1
             0
             1
-            0 0 )"s + std::to_string(itemID) + R"(
-            e -1
-            n -1
-            w -1
-            s -1
-        )"s);
+            0 0 )"s + std::to_string(itemID)
+        );
         Room room;
         room.load(ss);
         Player p;
