@@ -6,6 +6,8 @@
 #include <game/room.hpp>
 #include <utils/inrange.hpp>
 
+#include <utility>
+
 Mob::Mob() {
     xp_ = 1;
 }
@@ -39,7 +41,7 @@ void Mob::executeAction(Action action, Room& room) {
         break;
     }
     if (action.newStrategy) {
-        strategy_ = action.newStrategy;
+        strategy_ = std::move(action.newStrategy);
     }
 }
 
@@ -84,6 +86,6 @@ const std::string& Mob::getStrategyName() const {
     return strategy_->getName();
 }
 
-void Mob::setStrategy(std::shared_ptr<MobStrategy> strategy) {
-    strategy_ = strategy;
+void Mob::setStrategy(std::unique_ptr<MobStrategy> strategy) {
+    strategy_ = std::move(strategy);
 }

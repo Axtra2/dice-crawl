@@ -60,10 +60,13 @@ bool Map::load(std::istream& in) {
     int32_t nRooms;
     in >> nRooms;
 
-    rooms_.assign(nRooms, Room());
+    rooms_.clear();
+    rooms_.reserve(nRooms);
+
     neighbours_.assign(nRooms, {});
 
     for (int32_t roomI = 0; roomI < nRooms; ++roomI) {
+        rooms_.push_back(Room());
         rooms_[roomI].load(in);
 
         char c;

@@ -129,13 +129,13 @@ void Room::generate(int32_t width, int32_t height) {
                 Mob mob;
                 switch (mobStratDis(rng)) {
                 case 0:
-                    mob.setStrategy(std::shared_ptr<MobStrategy>(new Hostile()));
+                    mob.setStrategy(std::unique_ptr<MobStrategy>(new Hostile()));
                     break;
                 case 1:
-                    mob.setStrategy(std::shared_ptr<MobStrategy>(new Passive()));
+                    mob.setStrategy(std::unique_ptr<MobStrategy>(new Passive()));
                     break;
                 case 2:
-                    mob.setStrategy(std::shared_ptr<MobStrategy>(new Coward()));
+                    mob.setStrategy(std::unique_ptr<MobStrategy>(new Coward()));
                     break;
                 default:
                     break;
@@ -206,8 +206,7 @@ std::optional<int32_t> Room::removeItem(int32_t x, int32_t y) {
 
 void Room::updateMobs() {
     for (auto& mob : mobs_) {
-        auto action = mob.pickAction(*this);
-        mob.executeAction(action, *this);
+        mob.executeAction(mob.pickAction(*this), *this);
     }
 }
 

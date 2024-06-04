@@ -42,7 +42,7 @@ void testStrategy() {
     Mob mob;
     Room room;
     S* strat = new S;
-    mob.setStrategy(std::shared_ptr<MobStrategy>(strat));
+    mob.setStrategy(std::unique_ptr<MobStrategy>(strat));
     assert(mob.getStrategyName() == strat->getName());
     assert(strat->c == 0);
     mob.pickAction(room);
