@@ -11,7 +11,7 @@
 #include <utility>
 
 void Player::receiveAttack(int32_t damage) {
-    int32_t defense = throwDice(baseDefenseDice_);
+    int32_t defense = throwDice(getBaseDefenseDice());
     for (auto eq : equipment_) {
         if (!eq) {
             continue;
@@ -24,7 +24,9 @@ void Player::receiveAttack(int32_t damage) {
         defense = throwDice(dice)(defense);
     }
     damage = std::max(0, damage - defense);
-    addInRange(health_, -damage, 0, maxHealth_);
+    int32_t h = getHealth();
+    addInRange(h, -damage, 0, getMaxHealth());
+    setHealth(h);
 }
 
 bool Player::move(Map& map, Direction direction) {
@@ -41,7 +43,7 @@ bool Player::move(Map& map, Direction direction) {
     }
     Character* otherCharacter = room.characterAt(x, y);
     if (otherCharacter != nullptr) {
-        int32_t attack = throwDice(baseAttackDice_);
+        int32_t attack = throwDice(getBaseAttackDice());
         for (auto eq : equipment_) {
             if (!eq) {
                 continue;
@@ -55,7 +57,7 @@ bool Player::move(Map& map, Direction direction) {
         }
         otherCharacter->receiveAttack(attack);
         if (otherCharacter->isDead()) {
-            xp_ += otherCharacter->getXP();
+            setXP(getXP() + otherCharacter->getXP());
         }
         return true;
     }
@@ -137,7 +139,7 @@ Player::getInventory() const {
 }
 
 bool Player::canLevelUp() const {
-    return xp_ >= xpForLevelUp(level_);
+    return getXP() >= xpForLevelUp(level_);
 }
 
 int32_t Player::getLevel() const {
@@ -150,15 +152,6 @@ uint64_t Player::xpForLevelUp(int32_t currentLevel) {
 
 void Player::oneLevelUp() {
     assert(canLevelUp());
-    xp_ -= xpForLevelUp(level_);
+    setXP(getXP() - xpForLevelUp(level_));
     ++level_;
-}
-
-void Player::setMaxHealth(int32_t maxHealth) {
-    maxHealth_ = maxHealth;
-    health_ = std::min(health_, maxHealth);
-}
-
-void Player::setHealth(int32_t health) {
-    health_ = std::min(health, maxHealth_);
 }

@@ -9,7 +9,7 @@
 #include <utility>
 
 Mob::Mob() {
-    xp_ = 1;
+    setXP(1);
 }
 
 MobStrategy::MobStrategy(std::string_view name)
@@ -21,7 +21,9 @@ const std::string& MobStrategy::getName() const {
 }
 
 void Mob::receiveAttack(int32_t damage) {
-    addInRange(health_, -damage, 0, maxHealth_);
+    int32_t h = getHealth();
+    addInRange(h, -damage, 0, getMaxHealth());
+    setHealth(h);
 }
 
 Mob::Action Mob::pickAction(const Room& room) {
@@ -54,10 +56,10 @@ void Mob::move(Room& room, Direction direction) {
     }
     Character* otherCharacter = room.characterAt(targetX, targetY);
     if (otherCharacter != nullptr) {
-        int32_t attack = throwDice(baseAttackDice_);
+        int32_t attack = throwDice(getBaseAttackDice());
         otherCharacter->receiveAttack(attack);
         if (otherCharacter->isDead()) {
-            xp_ += otherCharacter->getXP();
+            setXP(getXP() + otherCharacter->getXP());
         }
         return;
     }

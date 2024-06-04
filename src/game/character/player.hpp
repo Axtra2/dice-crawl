@@ -29,10 +29,6 @@ public:
     void oneLevelUp();
     static uint64_t xpForLevelUp(int32_t currentLevel);
 
-    void setMaxHealth(int32_t maxHealth);
-
-    void setHealth(int32_t health);
-
     const std::array<std::optional<int32_t>, N_EQ_SLOTS>& getEquipment() const;
     const std::array<std::optional<int32_t>, N_INV_SLOTS>& getInventory() const;
 
