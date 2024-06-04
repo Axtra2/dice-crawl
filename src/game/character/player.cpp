@@ -156,9 +156,9 @@ void Player::oneLevelUp() {
 
 void Player::setMaxHealth(int32_t maxHealth) {
     maxHealth_ = maxHealth;
+    health_ = std::min(health_, maxHealth);
 }
 
 void Player::setHealth(int32_t health) {
-    assert(health <= maxHealth_);
-    health_ = health;
+    health_ = std::min(health, maxHealth_);
 }
