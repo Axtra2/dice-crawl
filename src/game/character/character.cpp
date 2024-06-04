@@ -44,5 +44,5 @@ uint64_t Character::getXP() const {
 }
 
 void Character::setXP(uint64_t xp) {
-    xp_ = std::max(0ull, xp);
+    xp_ = xp;
 }
