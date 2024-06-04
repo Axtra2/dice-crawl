@@ -27,14 +27,14 @@ void testFinishThenMode() {
         assert(!program.finished());
     };
 
-    test(Program::toMainMenu);
-    test(Program::toEscMenu);
-    test.template operator()<Map>(Program::toGame, Map());
-    test(Program::toGame);
-    test(Program::toGameOver);
+    test(&Program::toMainMenu);
+    test(&Program::toEscMenu);
+    test.template operator()<Map>(&Program::toGame, Map());
+    test(&Program::toGame);
+    test(&Program::toGameOver);
     {
         Player p;
-        test(Program::toLevelUp, p);
+        test(&Program::toLevelUp, p);
     }
 }
 
