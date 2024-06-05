@@ -39,12 +39,15 @@ set(DICE_CRAWL_SRCS
   ${CMAKE_SOURCE_DIR}/src/utils/random.cpp
 )
 
-set(DICE_CRAWL_WARNING_FLAGS
-  -Wall
-  -Wshadow
-  -Wpedantic
-  -Wno-unused-parameter
-)
+if(NOT MSVC)
+  set(DICE_CRAWL_WARNING_FLAGS
+    -Wall
+    -Wextra
+    -Wshadow
+    -Wpedantic
+    -Wno-unused-parameter
+  )
+endif()
 
 set(DICE_CRAWL_INCLUDE ${CMAKE_SOURCE_DIR}/src)
 
