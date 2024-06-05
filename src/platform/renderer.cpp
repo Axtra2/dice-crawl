@@ -47,7 +47,7 @@ void Renderer::render(
         map,
         c
     );
-    c.DrawText(c.width() / 2, c.height() / 2, "x");
+    c.DrawText(c.width() / 2, c.height() / 2, "\u2B24", ftxui::Color::Green);
     auto hud = drawHUD(room, player, selectedInventorySlot);
     new(data_) Element(hbox({canvas(std::move(c)), separator(), hud}));
 }
