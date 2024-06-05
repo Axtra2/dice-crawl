@@ -47,6 +47,12 @@ public:
     std::optional<int32_t> removeItem(int32_t x, int32_t y);
 
     void generate(int32_t width, int32_t height);
+    void generate(
+        int32_t minWidth,
+        int32_t maxWidth,
+        int32_t minHeight,
+        int32_t maxHeight
+    );
     void generate();
     bool load(std::istream& in);
 

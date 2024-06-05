@@ -16,15 +16,11 @@ MainMenu::MainMenu()
     },
     {
         [](Program& program){
-            Map map;
-            map.generate();
-            program.toGame(std::move(map));
+            program.toGame(MapBuilder().build());
             program.init();
         },
         [](Program& program){
-            Map map;
-            map.load("saves/map.txt");
-            program.toGame(std::move(map));
+            program.toGame(MapBuilder().file("saves/map.txt").build());
             program.init();
         },
         [](Program& program){

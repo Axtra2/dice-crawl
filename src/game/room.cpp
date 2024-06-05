@@ -154,16 +154,31 @@ void Room::generate(int32_t width, int32_t height) {
     }
 }
 
+void Room::generate(
+    int32_t minWidth,
+    int32_t maxWidth,
+    int32_t minHeight,
+    int32_t maxHeight
+) {
+    std::uniform_int_distribution widthDis(0, (maxWidth - minWidth) / 2);
+    std::uniform_int_distribution heightDis(0, (maxHeight - minHeight) / 2);
+    auto& rng = getRNG();
+    generate(minWidth + 2 * widthDis(rng), minHeight + 2 * heightDis(rng));
+}
+
 void Room::generate() {
     static constexpr int32_t MIN_ROOM_WIDTH = 3;
     static constexpr int32_t MAX_ROOM_WIDTH = 21;
     static constexpr int32_t MIN_ROOM_HEIGHT = 3;
     static constexpr int32_t MAX_ROOM_HEIGHT = 21;
-    std::uniform_int_distribution widthDis(0, (MAX_ROOM_WIDTH - MIN_ROOM_WIDTH) / 2);
-    std::uniform_int_distribution heightDis(0, (MAX_ROOM_HEIGHT - MIN_ROOM_HEIGHT) / 2);
-    auto& rng = getRNG();
-    generate(MIN_ROOM_WIDTH + 2 * widthDis(rng), MIN_ROOM_HEIGHT + 2 * heightDis(rng));
+    generate(
+        MIN_ROOM_WIDTH,
+        MAX_ROOM_WIDTH,
+        MIN_ROOM_HEIGHT,
+        MAX_ROOM_HEIGHT
+    );
 }
+
 
 
 bool Room::load(std::istream& in) {
