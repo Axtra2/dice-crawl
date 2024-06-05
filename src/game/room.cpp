@@ -64,12 +64,12 @@ void Room::generate(int32_t width, int32_t height) {
     // tiles
     const auto& tilesDict = getTilesDict();
     const std::vector<TileID> iToTileID = [&](){
-        std::vector<TileID> iToTileID;
-        iToTileID.reserve(tilesDict.size());
+        std::vector<TileID> iToTileID_;
+        iToTileID_.reserve(tilesDict.size());
         for (const auto& [id, _] : tilesDict) {
-            iToTileID.push_back(id);
+            iToTileID_.push_back(id);
         }
-        return iToTileID;
+        return iToTileID_;
     }();
     std::discrete_distribution tileSpawnDis({1.0, 0.05});
     std::discrete_distribution tileDis = [&](){
@@ -84,12 +84,12 @@ void Room::generate(int32_t width, int32_t height) {
     // items
     const auto& itemsDict = getItemsDict();
     static const std::vector<int32_t> iToItemID = [&](){
-        std::vector<int32_t> iToItemID;
-        iToItemID.reserve(itemsDict.size());
+        std::vector<int32_t> iToItemID_;
+        iToItemID_.reserve(itemsDict.size());
         for (const auto& [id, _] : itemsDict) {
-            iToItemID.push_back(id);
+            iToItemID_.push_back(id);
         }
-        return iToItemID;
+        return iToItemID_;
     }();
     std::discrete_distribution itemSpawnDis({1.0, 0.01});
     std::discrete_distribution itemDis = [&](){

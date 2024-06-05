@@ -179,8 +179,6 @@ void Map::traverse(
         );
     }
 
-
-    auto& node = rooms_[node_idx];
     Direction dirs[] = { EAST, NORTH, WEST };
     std::shuffle(std::begin(dirs), std::end(dirs), rng);
     auto& ns = neighbours_[node_idx];
