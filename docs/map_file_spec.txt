@@ -1,0 +1,13 @@
+<number of rooms>
+    <room width> <room height>
+        <number of tiles>
+            <tile X> <tile Y> <tile ID>
+            ...
+        <number of items>
+            <item X> <item Y> <item ID>
+            ...
+        e (<room ID> | -1)
+        n (<room ID> | -1)
+        w (<room ID> | -1)
+        s (<room ID> | -1)
+    ...
