@@ -2,9 +2,9 @@
 
 #include <game/character/mob/mob.hpp>
 
-class Hostile : public MobStrategy {
+class Mold : public MobStrategy {
 public:
-    Hostile();
+    Mold();
     [[nodiscard]] MobStrategy* clone() const override;
 
 private:

@@ -42,6 +42,7 @@ public:
         int32_t fromX, int32_t fromY,
         int32_t toX, int32_t toY
     );
+    Mob& spawnMob(int32_t x, int32_t y, const Mob& prototype);
     void updateMobs();
     const std::vector<std::unique_ptr<Mob>>& getMobs() const;
 

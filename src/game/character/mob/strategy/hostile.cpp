@@ -10,6 +10,10 @@ MobStrategy::Action Hostile::pickAction(const Mob& mob, const Room& room) {
     return action;
 }
 
+[[nodiscard]] MobStrategy* Hostile::clone() const {
+    return new Hostile();
+}
+
 Hostile::Hostile()
   : MobStrategy("Hostile")
 { }

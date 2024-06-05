@@ -99,7 +99,7 @@ void Room::generate(int32_t width, int32_t height, MobFactory& mobFactory) {
     }();
 
     // mobs
-    std::vector<double> ws = { 1.0, 1.0, 1.0 };
+    std::vector<double> ws = { 1.0, 1.0, 1.0, 1.0 };
     std::discrete_distribution mobSpawnDis({1.0, 0.01});
     std::discrete_distribution mobStratDis(ws.begin(), ws.end());
 
@@ -138,6 +138,9 @@ void Room::generate(int32_t width, int32_t height, MobFactory& mobFactory) {
                     break;
                 case 2:
                     mob.reset(mobFactory.createCoward());
+                    break;
+                case 3:
+                    mob.reset(mobFactory.createMold());
                     break;
                 default:
                     assert(false);
@@ -183,8 +186,6 @@ void Room::generate(MobFactory& mobFactory) {
     );
 }
 
-
-
 bool Room::load(std::istream& in) {
     if (!in) {
         return false;
@@ -229,8 +230,14 @@ std::optional<int32_t> Room::removeItem(int32_t x, int32_t y) {
 }
 
 void Room::updateMobs() {
-    for (auto& mob : mobs_) {
-        mob->executeAction(mob->pickAction(*this), *this);
+    // save initial size to not let mobs spawned
+    // during this turn act
+    const size_t n = mobs_.size();
+    // use indices for iteration here because some
+    // mobs might push into mobs vector and invalidate
+    // iterators
+    for (size_t i = 0; i < n; ++i) {
+        mobs_[i]->executeAction(mobs_[i]->pickAction(*this), *this);
     }
 }
 
@@ -238,6 +245,8 @@ void Room::relocateMob(
     int32_t fromX, int32_t fromY,
     int32_t toX, int32_t toY
 ) {
+    assert(characterAt(toX, toY) == nullptr);
+    assert(isPassable(toX, toY));
     auto it = locationToMob_.find({fromX,fromY});
     if (it == locationToMob_.end()) {
         return;
@@ -245,6 +254,17 @@ void Room::relocateMob(
     int32_t mobID = it->second;
     locationToMob_.erase(it);
     locationToMob_[{toX,toY}] = mobID;
+}
+
+Mob& Room::spawnMob(int32_t x, int32_t y, const Mob& prototype) {
+    assert(characterAt(x, y) == nullptr);
+    assert(isPassable(x, y));
+    mobs_.emplace_back(prototype.clone());
+    mobs_.back()->setX(x);
+    mobs_.back()->setY(y);
+    int32_t mobID = ssize(mobs_) - 1;
+    locationToMob_[{x,y}] = mobID;
+    return *mobs_.back();
 }
 
 const std::vector<std::unique_ptr<Mob>>& Room::getMobs() const {

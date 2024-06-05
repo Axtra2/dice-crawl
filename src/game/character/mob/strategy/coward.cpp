@@ -12,6 +12,10 @@ MobStrategy::Action Coward::pickAction(const Mob& mob, const Room& room) {
     return action;
 }
 
+[[nodiscard]] MobStrategy* Coward::clone() const {
+    return new Coward();
+}
+
 Coward::Coward()
   : MobStrategy("Coward")
 { }

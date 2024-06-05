@@ -35,7 +35,8 @@ void testStrategy() {
     struct S : MobStrategy {
         int c = 0;
         S() : MobStrategy("a") { }
-        Action pickAction(const Mob&, const Room&) {
+        MobStrategy* clone() const override { return nullptr; }
+        Action pickAction(const Mob&, const Room&) override {
             ++c;
             return {};
         }

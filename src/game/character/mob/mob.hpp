@@ -15,7 +15,7 @@ class Mob;
 
 class MobStrategy {
 public:
-    enum class ActionType { NONE = 0, MOVE = 1 };
+    enum class ActionType { NONE = 0, MOVE = 1, REPLICATE = 2 };
     struct Action {
         ActionType type = ActionType::NONE;
         std::unique_ptr<MobStrategy> newStrategy;
@@ -25,6 +25,7 @@ public:
 public:
     MobStrategy(std::string_view name);
     const std::string& getName() const;
+    [[nodiscard]] virtual MobStrategy* clone() const = 0;
 
 private:
     friend class Mob;
@@ -46,12 +47,15 @@ public:
     void executeAction(Action action, Room& room);
     const std::string& getStrategyName() const;
     void move(Room& Room, Direction direction);
+    void replicate(Room& room, Direction direction);
     int32_t getX() const;
     int32_t getY() const;
     void setX(int32_t x);
     void setY(int32_t y);
     void setStrategy(std::unique_ptr<MobStrategy> strategy);
+    const std::unique_ptr<MobStrategy>& getStrategy() const;
     virtual Color getColor() const = 0;
+    [[nodiscard]] virtual Mob* clone() const = 0;
 
 private:
     int32_t x_ = 0;
@@ -65,5 +69,6 @@ public:
     [[nodiscard]] virtual Mob* createHostile() = 0;
     [[nodiscard]] virtual Mob* createPassive() = 0;
     [[nodiscard]] virtual Mob* createCoward() = 0;
+    [[nodiscard]] virtual Mob* createMold() = 0;
     virtual ~MobFactory() = default;
 };

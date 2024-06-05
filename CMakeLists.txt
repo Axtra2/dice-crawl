@@ -26,6 +26,7 @@ set(DICE_CRAWL_SRCS
   ${CMAKE_SOURCE_DIR}/src/game/character/mob/strategy/hostile.cpp
   ${CMAKE_SOURCE_DIR}/src/game/character/mob/strategy/passive.cpp
   ${CMAKE_SOURCE_DIR}/src/game/character/mob/strategy/coward.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/character/mob/strategy/mold.cpp
   ${CMAKE_SOURCE_DIR}/src/game/character/mob/fantasy_mob.cpp
   ${CMAKE_SOURCE_DIR}/src/game/character/mob/sci_fi_mob.cpp
   ${CMAKE_SOURCE_DIR}/src/game/character/mob/mob.cpp
