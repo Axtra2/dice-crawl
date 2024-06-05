@@ -13,7 +13,7 @@ project(roguelike LANGUAGES CXX VERSION 1.0.0)
 include(CTest)
 enable_testing()
 
-SET(DICE_CRAWL_SRCS
+set(DICE_CRAWL_SRCS
   ${CMAKE_SOURCE_DIR}/src/platform/renderer.cpp
   ${CMAKE_SOURCE_DIR}/src/platform/files.cpp
 
@@ -39,6 +39,14 @@ SET(DICE_CRAWL_SRCS
   ${CMAKE_SOURCE_DIR}/src/utils/random.cpp
 )
 
+set(DICE_CRAWL_WARNING_FLAGS
+  -Wall
+  -Wextra
+  -Wshadow
+  -Wpedantic
+  -Wno-unused-parameter
+)
+
 set(DICE_CRAWL_INCLUDE ${CMAKE_SOURCE_DIR}/src)
 
 set(DICE_CRAWL_LIBS
@@ -51,6 +59,7 @@ add_library(roguelike_objects OBJECT ${DICE_CRAWL_SRCS})
 target_include_directories(roguelike_objects PRIVATE ${DICE_CRAWL_INCLUDE})
 target_link_libraries(roguelike_objects PRIVATE ${DICE_CRAWL_LIBS})
 set_property(TARGET roguelike_objects PROPERTY CXX_STANDARD 20)
+target_compile_options(roguelike_objects PRIVATE ${DICE_CRAWL_WARNING_FLAGS})
 
 add_executable(roguelike
   src/platform/main.cpp
@@ -59,6 +68,7 @@ add_executable(roguelike
 target_link_libraries(roguelike PRIVATE ${DICE_CRAWL_LIBS})
 target_include_directories(roguelike PRIVATE ${DICE_CRAWL_INCLUDE})
 set_property(TARGET roguelike PROPERTY CXX_STANDARD 20)
+target_compile_options(roguelike PRIVATE ${DICE_CRAWL_WARNING_FLAGS})
 
 configure_file("saves/map.txt" "saves/map.txt" COPYONLY)
 
