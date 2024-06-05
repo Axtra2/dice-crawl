@@ -108,6 +108,11 @@ void Room::generate(int32_t width, int32_t height) {
 
     auto& rng = getRNG();
 
+    tiles_.clear();
+    items_.clear();
+    locationToMob_.clear();
+    mobs_.clear();
+
     for (int32_t y = 0; y < height; ++y) {
         for (int32_t x = 0; x < width; ++x) {
             if (tileSpawnDis(rng) == 1) {
