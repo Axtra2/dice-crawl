@@ -1,3 +1,4 @@
+#include <game/character/mob/fantasy_mob.hpp>
 #include <platform/files.hpp>
 #include <game/direction.hpp>
 #include <game/map.hpp>
@@ -43,7 +44,8 @@ void Map::generate(
     int32_t minRoomWidth,
     int32_t maxRoomWidth,
     int32_t minRoomHeight,
-    int32_t maxRoomHeight
+    int32_t maxRoomHeight,
+    MobFactory& mobFactory
 ) {
     std::uniform_int_distribution dis(minNLayers, maxNLayers);
     num_layers_ = dis(getRNG());
@@ -54,14 +56,16 @@ void Map::generate(
         minRoomWidth,
         maxRoomWidth,
         minRoomHeight,
-        maxRoomHeight
+        maxRoomHeight,
+        mobFactory
     );
     boss_room_ = generate_node(
         num_layers_,
         minRoomWidth,
         maxRoomWidth,
         minRoomHeight,
-        maxRoomHeight
+        maxRoomHeight,
+        mobFactory
     );
     traverse(
         layers_[0][0],
@@ -69,7 +73,8 @@ void Map::generate(
         minRoomWidth,
         maxRoomWidth,
         minRoomHeight,
-        maxRoomHeight
+        maxRoomHeight,
+        mobFactory
     );
 }
 
@@ -132,7 +137,8 @@ void Map::traverse(
     int32_t minRoomWidth,
     int32_t maxRoomWidth,
     int32_t minRoomHeight,
-    int32_t maxRoomHeight
+    int32_t maxRoomHeight,
+    MobFactory& mobFactory
 ) {
     using enum Direction;
     int32_t num_nodes;
@@ -166,7 +172,8 @@ void Map::traverse(
             minRoomWidth,
             maxRoomWidth,
             minRoomHeight,
-            maxRoomHeight
+            maxRoomHeight,
+            mobFactory
         );
         connections.push_back(new_node);
         traverse(
@@ -175,7 +182,8 @@ void Map::traverse(
             minRoomWidth,
             maxRoomWidth,
             minRoomHeight,
-            maxRoomHeight
+            maxRoomHeight,
+            mobFactory
         );
     }
 
@@ -192,14 +200,16 @@ int32_t Map::generate_node(
     int32_t minWidth,
     int32_t maxWidth,
     int32_t minHeight,
-    int32_t maxHeight
+    int32_t maxHeight,
+    MobFactory& mobFactory
 ) {
     Room room;
     room.generate(
         minWidth,
         maxWidth,
         minHeight,
-        maxHeight
+        maxHeight,
+        mobFactory
     );
     const int32_t id = rooms_.size();
     rooms_.push_back(std::move(room));
@@ -211,12 +221,14 @@ int32_t Map::generate_node(
 
 MapBuilder& MapBuilder::file(std::string_view filename) {
     assert(!stream_.has_value());
+    assert(mobFactory_ == nullptr);
     filename_ = filename;
     return *this;
 }
 
 MapBuilder& MapBuilder::stream(std::istream& is) {
     assert(!filename_.has_value());
+    assert(mobFactory_ == nullptr);
     stream_ = &is;
     return *this;
 }
@@ -275,20 +287,39 @@ MapBuilder& MapBuilder::roomSize(int32_t width, int32_t height) {
     return *this;
 }
 
+MapBuilder& MapBuilder::mobFactory(MobFactory& mobFactory) {
+    assert(!filename_.has_value());
+    assert(!stream_.has_value());
+    mobFactory_ = &mobFactory;
+    return *this;
+}
+
 Map MapBuilder::build() {
     Map map;
     if (filename_) {
         map.load(filename_.value().c_str());
     } else if (stream_) {
         map.load(*stream_.value());
-    } else {
+    } else if (mobFactory_ != nullptr) {
         map.generate(
             minNLayers_,
             maxNLayers_,
             minRoomWidth_,
             maxRoomWidth_,
             minRoomHeight_,
-            maxRoomHeight_
+            maxRoomHeight_,
+            *mobFactory_
+        );
+    } else {
+        FantasyMobFactory mobFactory;
+        map.generate(
+            minNLayers_,
+            maxNLayers_,
+            minRoomWidth_,
+            maxRoomWidth_,
+            minRoomHeight_,
+            maxRoomHeight_,
+            mobFactory
         );
     }
     return map;

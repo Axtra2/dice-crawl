@@ -2,6 +2,7 @@
 
 #include <game/character/character.hpp>
 #include <game/direction.hpp>
+#include <game/color.hpp>
 
 #include <cstdint>
 #include <variant>
@@ -35,6 +36,7 @@ private:
     std::string name_;
 };
 
+
 class Mob : public Character {
 public:
     using Action = MobStrategy::Action;
@@ -49,9 +51,19 @@ public:
     void setX(int32_t x);
     void setY(int32_t y);
     void setStrategy(std::unique_ptr<MobStrategy> strategy);
+    virtual Color getColor() const = 0;
 
 private:
     int32_t x_ = 0;
     int32_t y_ = 0;
     std::unique_ptr<MobStrategy> strategy_;
+};
+
+
+class MobFactory {
+public:
+    [[nodiscard]] virtual Mob* createHostile() = 0;
+    [[nodiscard]] virtual Mob* createPassive() = 0;
+    [[nodiscard]] virtual Mob* createCoward() = 0;
+    virtual ~MobFactory() = default;
 };

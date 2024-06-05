@@ -1,6 +1,3 @@
-#include <game/character/mob/hostile.hpp>
-#include <game/character/mob/passive.hpp>
-#include <game/character/mob/coward.hpp>
 #include <utils/random.hpp>
 #include <game/room.hpp>
 #include <game/item.hpp>
@@ -52,7 +49,7 @@ bool Room::isPassable(int32_t x, int32_t y) const {
     return it == tiles_.end() || !getTilesDict().at(it->second).isWall;
 }
 
-void Room::generate(int32_t width, int32_t height) {
+void Room::generate(int32_t width, int32_t height, MobFactory& mobFactory) {
     assert(width >= 0);
     assert(height >= 0);
     assert(width % 2 == 1);
@@ -131,22 +128,23 @@ void Room::generate(int32_t width, int32_t height) {
             }
 
             if (mobSpawnDis(rng) == 1) {
-                Mob mob;
+                std::unique_ptr<Mob> mob;
                 switch (mobStratDis(rng)) {
                 case 0:
-                    mob.setStrategy(std::unique_ptr<MobStrategy>(new Hostile()));
+                    mob.reset(mobFactory.createHostile());
                     break;
                 case 1:
-                    mob.setStrategy(std::unique_ptr<MobStrategy>(new Passive()));
+                    mob.reset(mobFactory.createPassive());
                     break;
                 case 2:
-                    mob.setStrategy(std::unique_ptr<MobStrategy>(new Coward()));
+                    mob.reset(mobFactory.createCoward());
                     break;
                 default:
+                    assert(false);
                     break;
                 }
-                mob.setX(x);
-                mob.setY(y);
+                mob->setX(x);
+                mob->setY(y);
                 mobs_.push_back(std::move(mob));
                 locationToMob_[{x,y}] = mobs_.size() - 1;
             }
@@ -158,15 +156,20 @@ void Room::generate(
     int32_t minWidth,
     int32_t maxWidth,
     int32_t minHeight,
-    int32_t maxHeight
+    int32_t maxHeight,
+    MobFactory& mobFactory
 ) {
     std::uniform_int_distribution widthDis(0, (maxWidth - minWidth) / 2);
     std::uniform_int_distribution heightDis(0, (maxHeight - minHeight) / 2);
     auto& rng = getRNG();
-    generate(minWidth + 2 * widthDis(rng), minHeight + 2 * heightDis(rng));
+    generate(
+        minWidth + 2 * widthDis(rng),
+        minHeight + 2 * heightDis(rng),
+        mobFactory
+    );
 }
 
-void Room::generate() {
+void Room::generate(MobFactory& mobFactory) {
     static constexpr int32_t MIN_ROOM_WIDTH = 3;
     static constexpr int32_t MAX_ROOM_WIDTH = 21;
     static constexpr int32_t MIN_ROOM_HEIGHT = 3;
@@ -175,7 +178,8 @@ void Room::generate() {
         MIN_ROOM_WIDTH,
         MAX_ROOM_WIDTH,
         MIN_ROOM_HEIGHT,
-        MAX_ROOM_HEIGHT
+        MAX_ROOM_HEIGHT,
+        mobFactory
     );
 }
 
@@ -226,7 +230,7 @@ std::optional<int32_t> Room::removeItem(int32_t x, int32_t y) {
 
 void Room::updateMobs() {
     for (auto& mob : mobs_) {
-        mob.executeAction(mob.pickAction(*this), *this);
+        mob->executeAction(mob->pickAction(*this), *this);
     }
 }
 
@@ -243,7 +247,7 @@ void Room::relocateMob(
     locationToMob_[{toX,toY}] = mobID;
 }
 
-const std::vector<Mob>& Room::getMobs() const {
+const std::vector<std::unique_ptr<Mob>>& Room::getMobs() const {
     return mobs_;
 }
 
@@ -273,11 +277,11 @@ const Character* Room::characterAt(int32_t x, int32_t y) const {
     if (it == locationToMob_.end()) {
         return nullptr;
     }
-    const Mob& mob = mobs_[it->second];
-    if (mob.isDead()) {
+    const auto& mob = mobs_[it->second];
+    if (mob->isDead()) {
         return nullptr;
     }
-    return &mob;
+    return mob.get();
 }
 
 Character* Room::characterAt(int32_t x, int32_t y) {

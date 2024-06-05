@@ -1,3 +1,4 @@
+#include <game/character/mob/sci_fi_mob.hpp>
 #include <game/program_mode/esc_menu.hpp>
 #include <game/program.hpp>
 
@@ -18,7 +19,8 @@ EscMenu::EscMenu()
             program.toGame();
         },
         [](Program& program){
-            program.toGame(MapBuilder().build());
+            SciFiMobFactory mobFactory;
+            program.toGame(MapBuilder().mobFactory(mobFactory).build());
             program.init();
         },
         [](Program& program){

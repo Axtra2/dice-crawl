@@ -26,9 +26,9 @@ public:
         int32_t minRoomWidth,
         int32_t maxRoomWidth,
         int32_t minRoomHeight,
-        int32_t maxRoomHeight
+        int32_t maxRoomHeight,
+        MobFactory& mobFactory
     );
-    // void generate();
 
 private:
     void traverse(
@@ -37,7 +37,8 @@ private:
         int32_t minRoomWidth,
         int32_t maxRoomWidth,
         int32_t minRoomHeight,
-        int32_t maxRoomHeight
+        int32_t maxRoomHeight,
+        MobFactory& mobFactory
     );
 
     int32_t generate_node(
@@ -45,7 +46,8 @@ private:
         int32_t minWidth,
         int32_t maxWidth,
         int32_t minHeight,
-        int32_t maxHeight
+        int32_t maxHeight,
+        MobFactory& mobFactory
     );
 
 private:
@@ -77,6 +79,8 @@ public:
     MapBuilder& minRoomSize(int32_t minWidth, int32_t minHeight);
     MapBuilder& roomSize(int32_t width, int32_t height);
 
+    MapBuilder& mobFactory(MobFactory& mobFactory);
+
     Map build();
 private:
     std::optional<std::string> filename_;
@@ -87,4 +91,5 @@ private:
     int32_t maxRoomWidth_ = 21;
     int32_t minRoomHeight_ = 3;
     int32_t maxRoomHeight_ = 21;
+    MobFactory* mobFactory_ = nullptr;
 };

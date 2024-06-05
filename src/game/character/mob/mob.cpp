@@ -1,4 +1,3 @@
-#include <game/character/mob/hostile.hpp>
 #include <game/character/mob/mob.hpp>
 #include <game/character/player.hpp>
 #include <game/direction.hpp>

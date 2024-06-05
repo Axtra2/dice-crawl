@@ -1,4 +1,4 @@
-#include <game/character/mob/coward.hpp>
+#include <game/character/mob/strategy/coward.hpp>
 #include <game/room.hpp>
 
 #include <string>

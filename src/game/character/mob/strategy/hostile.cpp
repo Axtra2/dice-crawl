@@ -1,4 +1,4 @@
-#include <game/character/mob/hostile.hpp>
+#include <game/character/mob/strategy/hostile.hpp>
 #include <game/room.hpp>
 
 MobStrategy::Action Hostile::pickAction(const Mob& mob, const Room& room) {

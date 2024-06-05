@@ -23,9 +23,11 @@ set(DICE_CRAWL_SRCS
   ${CMAKE_SOURCE_DIR}/src/game/program_mode/level_up.cpp
   ${CMAKE_SOURCE_DIR}/src/game/program_mode/game.cpp
   ${CMAKE_SOURCE_DIR}/src/game/program_mode/menu.cpp
-  ${CMAKE_SOURCE_DIR}/src/game/character/mob/hostile.cpp
-  ${CMAKE_SOURCE_DIR}/src/game/character/mob/passive.cpp
-  ${CMAKE_SOURCE_DIR}/src/game/character/mob/coward.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/character/mob/strategy/hostile.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/character/mob/strategy/passive.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/character/mob/strategy/coward.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/character/mob/fantasy_mob.cpp
+  ${CMAKE_SOURCE_DIR}/src/game/character/mob/sci_fi_mob.cpp
   ${CMAKE_SOURCE_DIR}/src/game/character/mob/mob.cpp
   ${CMAKE_SOURCE_DIR}/src/game/character/character.cpp
   ${CMAKE_SOURCE_DIR}/src/game/character/player.cpp

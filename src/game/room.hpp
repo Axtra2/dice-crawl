@@ -7,6 +7,7 @@
 #include <iostream>
 #include <optional>
 #include <cstdint>
+#include <memory>
 #include <vector>
 #include <span>
 #include <map>
@@ -42,18 +43,19 @@ public:
         int32_t toX, int32_t toY
     );
     void updateMobs();
-    const std::vector<Mob>& getMobs() const;
+    const std::vector<std::unique_ptr<Mob>>& getMobs() const;
 
     std::optional<int32_t> removeItem(int32_t x, int32_t y);
 
-    void generate(int32_t width, int32_t height);
+    void generate(int32_t width, int32_t height, MobFactory& mobFactory);
     void generate(
         int32_t minWidth,
         int32_t maxWidth,
         int32_t minHeight,
-        int32_t maxHeight
+        int32_t maxHeight,
+        MobFactory& mobFactory
     );
-    void generate();
+    void generate(MobFactory& mobFactory);
     bool load(std::istream& in);
 
     const Character* characterAt(int32_t x, int32_t y) const;
@@ -68,7 +70,7 @@ private:
     std::map<std::pair<int32_t, int32_t>, int32_t> tiles_;
     std::map<std::pair<int32_t, int32_t>, int32_t> items_;
 
-    std::vector<Mob> mobs_;
+    std::vector<std::unique_ptr<Mob>> mobs_;
     std::map<std::pair<int32_t, int32_t>, int32_t> locationToMob_;
 
     Player* player_ = nullptr;
