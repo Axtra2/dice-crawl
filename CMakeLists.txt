@@ -41,7 +41,6 @@ set(DICE_CRAWL_SRCS
 
 set(DICE_CRAWL_WARNING_FLAGS
   -Wall
-  -Wextra
   -Wshadow
   -Wpedantic
   -Wno-unused-parameter
