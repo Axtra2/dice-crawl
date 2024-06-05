@@ -1,9 +1,10 @@
 #include <game/program_mode/game.hpp>
-
 #include <platform/renderer.hpp>
 #include <game/direction.hpp>
 #include <utils/inrange.hpp>
 #include <game/program.hpp>
+
+#include <cassert>
 
 void Game::init(Program& program) {
     player_ = Player();
@@ -55,7 +56,8 @@ void Game::update(Program& program, char c) {
         program.toGameOver();
         program.init();
     }
-    if (player_.getXP() >= (1 << player_.getLevel())) {
+    assert(player_.getLevel() >= 0);
+    if (player_.getXP() >= (1ull << player_.getLevel())) {
         program.toLevelUp(player_);
         program.init();
     }

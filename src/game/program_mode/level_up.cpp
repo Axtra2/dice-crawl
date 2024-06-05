@@ -50,7 +50,7 @@ getLevelRewardOptions(int32_t levelReached) {
     assert(levelRewardNames_.size() == levelRewardActions_.size());
     assert(levelRewardNames_.size() > 0);
     int32_t i = levelReached - 1;
-    if (i >= levelRewardNames_.size()) {
+    if (i >= ssize(levelRewardNames_)) {
         i = levelRewardNames_.size() - 1;
     }
     return {
