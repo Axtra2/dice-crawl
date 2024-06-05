@@ -16,6 +16,12 @@ public:
     int32_t getWidth() const;
     int32_t getHeight() const;
 
+    Room() = default;
+    Room(const Room&) = delete;
+    Room& operator=(const Room&) = delete;
+    Room(Room&&) = default;
+    Room& operator=(Room&&) = default;
+
     const Player& player() const;
     Player& player();
 
