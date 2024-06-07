@@ -112,13 +112,15 @@ void Room::generate(int32_t width, int32_t height, MobFactory& mobFactory) {
 
     for (int32_t y = 0; y < height; ++y) {
         for (int32_t x = 0; x < width; ++x) {
+            if (x == width / 2 || y == height / 2) {
+                // force way between exits
+                continue;
+            }
             if (tileSpawnDis(rng) == 1) {
                 int32_t tileID = iToTileID[tileDis(rng)];
-                if (x != width / 2 && y != height / 2) { // force way between exits
-                    tiles_[{x,y}] = tileID;
-                    if (tilesDict.at(tileID).isWall) {
-                        continue; // do not add items or mobs over walls
-                    }
+                tiles_[{x,y}] = tileID;
+                if (tilesDict.at(tileID).isWall) {
+                    continue; // do not add items or mobs over walls
                 }
             }
 
