@@ -26,7 +26,7 @@ void Mob::receiveAttack(int32_t damage) {
 }
 
 Mob::Action Mob::pickAction(const Room& room) {
-    if (isDead() || !strategy_) {
+    if (!strategy_) {
         return {};
     }
     return strategy_->pickAction(*this, room);

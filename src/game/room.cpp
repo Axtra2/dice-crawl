@@ -239,6 +239,9 @@ void Room::updateMobs() {
     // mobs might push into mobs vector and invalidate
     // iterators
     for (size_t i = 0; i < n; ++i) {
+        if (mobs_[i]->isDead()) {
+            continue;
+        }
         mobs_[i]->executeAction(mobs_[i]->pickAction(*this), *this);
     }
 }
