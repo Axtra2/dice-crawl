@@ -46,6 +46,9 @@ Color SciFiMob::getColor() const {
 
 [[nodiscard]] Mob* SciFiMobFactory::createMold() {
     Mob* mob = new SciFiMob;
+    mob->setHealth(1);
+    mob->setMaxHealth(1);
+    mob->setXP(1);
     mob->setStrategy(std::unique_ptr<MobStrategy>(new Mold()));
     return mob;
 }

@@ -314,3 +314,7 @@ Character* Room::characterAt(int32_t x, int32_t y) {
         static_cast<const Room*>(this)->characterAt(x, y)
     );
 }
+
+std::vector<std::unique_ptr<Mob>>& Room::mobs() {
+    return mobs_;
+}

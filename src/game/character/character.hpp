@@ -10,19 +10,20 @@ class Character {
 public:
     virtual void receiveAttack(int32_t damage) = 0;
     virtual ~Character() = default;
-    bool isDead() const;
 
-    int32_t getMaxHealth() const;
-    int32_t getHealth() const;
-    void setMaxHealth(int32_t maxHealth);
-    void setHealth(int32_t health);
+    virtual bool isDead() const;
 
-    const Dice<int32_t>& getBaseAttackDice() const;
-    const Dice<int32_t>& getBaseDefenseDice() const;
-    Dice<int32_t>& getBaseAttackDiceMut();
-    Dice<int32_t>& getBaseDefenseDiceMut();
-    uint64_t getXP() const;
-    void setXP(uint64_t xp);
+    virtual int32_t getMaxHealth() const;
+    virtual int32_t getHealth() const;
+    virtual void setMaxHealth(int32_t maxHealth);
+    virtual void setHealth(int32_t health);
+
+    virtual const Dice<int32_t>& getBaseAttackDice() const;
+    virtual const Dice<int32_t>& getBaseDefenseDice() const;
+    virtual Dice<int32_t>& getBaseAttackDiceMut();
+    virtual Dice<int32_t>& getBaseDefenseDiceMut();
+    virtual uint64_t getXP() const;
+    virtual void setXP(uint64_t xp);
 
 private:
     int32_t maxHealth_ = 10;

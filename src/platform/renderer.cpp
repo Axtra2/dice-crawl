@@ -187,6 +187,9 @@ static void drawRoom(
             case 2: // helmet
                 drawAt(canvas, x, y, ftxui::Color::Purple);
                 break;
+            case 3: // bomb
+                drawAt(canvas, x, y, ftxui::Color::Red);
+                break;
             default:
                 break;
             }

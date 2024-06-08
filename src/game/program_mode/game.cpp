@@ -1,3 +1,4 @@
+#include <game/character/mob/confused.hpp>
 #include <game/program_mode/game.hpp>
 #include <platform/renderer.hpp>
 #include <game/direction.hpp>
@@ -5,6 +6,7 @@
 #include <game/program.hpp>
 
 #include <cassert>
+#include <utility>
 
 void Game::init(Program& program) {
     player_ = Player();
@@ -41,7 +43,17 @@ void Game::update(Program& program, char c) {
                 static_cast<Player::EquipmentSlot>(selectedInventorySlot_)
             );
         } else {
-            actionSuccess = player_.equip(selectedInventorySlot_ - nEqSlots);
+            int32_t i = selectedInventorySlot_ - nEqSlots;
+            auto item = player_.getInventory()[i];
+            if (item.has_value() && item.value() == 3) {
+                // TODO: remove bomb from inventory
+                // TODO: move this code into Player::use(Room&, slotID)
+                for (auto& mob : map_.currentRoom().mobs()) {
+                    mob.reset(new Confused(std::move(mob)));
+                }
+            } else {
+                actionSuccess = player_.equip(i);
+            }
         }
         break;
     }

@@ -64,6 +64,7 @@ public:
 
     const std::map<std::pair<int32_t, int32_t>, int32_t>& getTiles() const;
     const std::map<std::pair<int32_t, int32_t>, int32_t>& getItems() const;
+    std::vector<std::unique_ptr<Mob>>& mobs();
 
 private:
     int32_t width_ = 0;

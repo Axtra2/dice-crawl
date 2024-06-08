@@ -42,20 +42,22 @@ class Mob : public Character {
 public:
     using Action = MobStrategy::Action;
     Mob();
+
     void receiveAttack(int32_t damage) override;
-    Action pickAction(const Room& room);
-    void executeAction(Action action, Room& room);
-    const std::string& getStrategyName() const;
-    void move(Room& Room, Direction direction);
-    void replicate(Room& room, Direction direction);
-    int32_t getX() const;
-    int32_t getY() const;
-    void setX(int32_t x);
-    void setY(int32_t y);
-    void setStrategy(std::unique_ptr<MobStrategy> strategy);
-    const std::unique_ptr<MobStrategy>& getStrategy() const;
     virtual Color getColor() const = 0;
     [[nodiscard]] virtual Mob* clone() const = 0;
+
+    virtual Action pickAction(const Room& room);
+    virtual void executeAction(Action action, Room& room);
+    virtual const std::string& getStrategyName() const;
+    virtual void move(Room& room, Direction direction);
+    virtual void replicate(Room& room, Direction direction);
+    virtual int32_t getX() const;
+    virtual int32_t getY() const;
+    virtual void setX(int32_t x);
+    virtual void setY(int32_t y);
+    virtual void setStrategy(std::unique_ptr<MobStrategy> strategy);
+    virtual const std::unique_ptr<MobStrategy>& getStrategy() const;
 
 private:
     int32_t x_ = 0;
