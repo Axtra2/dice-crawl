@@ -24,6 +24,7 @@ public:
 
 public:
     MobStrategy(std::string_view name);
+    ~MobStrategy() = default;
     const std::string& getName() const;
     [[nodiscard]] virtual MobStrategy* clone() const = 0;
 
