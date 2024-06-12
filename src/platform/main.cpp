@@ -11,7 +11,6 @@ int main() {
 
     auto screen = ftxui::ScreenInteractive::Fullscreen();
     screen.TrackMouse(false);
-    auto exit = screen.ExitLoopClosure(); // call this to stop the main loop
 
     auto renderer = ftxui::Renderer([&] {
         alignas(ftxui::Element) char data[sizeof(ftxui::Element)];
@@ -19,7 +18,7 @@ int main() {
 
         program.render(myRenderer);
 
-        ftxui::Element* res_ptr = reinterpret_cast<ftxui::Element*>(data);
+        ftxui::Element* res_ptr = std::launder(reinterpret_cast<ftxui::Element*>(data));
         ftxui::Element res = std::move(*res_ptr);
         std::destroy_at(res_ptr);
         return res;
@@ -33,7 +32,8 @@ int main() {
 
         program.update(input.back());
         if (program.finished()) {
-            exit();
+            screen.ExitLoopClosure()();
+            return true;
         }
 
         return false;

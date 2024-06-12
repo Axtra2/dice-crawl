@@ -38,4 +38,6 @@ private:
     std::shared_ptr<ProgramMode> levelUp_;
 
     std::weak_ptr<ProgramMode> mode_;
+
+    bool isFinished = false;
 };
