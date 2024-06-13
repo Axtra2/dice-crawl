@@ -1,9 +1,7 @@
-#include <game/character/mob/confused.hpp>
 #include <game/program_mode/game.hpp>
 #include <platform/renderer.hpp>
 #include <game/direction.hpp>
-#include <utils/inrange.hpp>
-#include <game/program.hpp>
+#include <game/room.hpp>
 
 #include <cassert>
 #include <utility>
@@ -17,61 +15,68 @@ void Game::init(Program& program) {
     selectedInventorySlot_ = 0;
 }
 
-void Game::update(Program& program, char c) {
-    bool actionSuccess = false;
+void Game::processInput(Program& program, char c) {
     switch (c) {
+
     // do not cause simulation step
-    case 'j': incInRange(selectedInventorySlot_, 0, Player::N_EQ_SLOTS + Player::N_INV_SLOTS); return;
-    case 'k': decInRange(selectedInventorySlot_, 0, Player::N_EQ_SLOTS + Player::N_INV_SLOTS); return;
+    case 'j':
+        lastCommand_.reset(new MoveInventorySelectionCommand(
+            selectedInventorySlot_,
+            1
+        ));
+        return;
+    case 'k':
+        lastCommand_.reset(new MoveInventorySelectionCommand(
+            selectedInventorySlot_,
+            -1
+        ));
+        break;
     case 'q':
-        program.toEscMenu();
-        program.init();
+        lastCommand_.reset(new EscCommand(program));
         return;
 
     // cause simulation step
     using enum Direction;
-    case 'w': actionSuccess = player_.move(map_, NORTH); break;
-    case 'a': actionSuccess = player_.move(map_, WEST); break;
-    case 's': actionSuccess = player_.move(map_, SOUTH); break;
-    case 'd': actionSuccess = player_.move(map_, EAST); break;
-    case 'p': actionSuccess = player_.pickUp(map_.currentRoom()); break;
-    case 'e': {
-        using enum ItemInfo::WearInfo::WearType;
-        int32_t nEqSlots = static_cast<int32_t>(N_WEAR_TYPES);
-        if (selectedInventorySlot_ < nEqSlots) {
-            actionSuccess = player_.unequip(
-                static_cast<Player::EquipmentSlot>(selectedInventorySlot_)
-            );
-        } else {
-            int32_t i = selectedInventorySlot_ - nEqSlots;
-            auto item = player_.getInventory()[i];
-            if (item.has_value() && item.value() == 3) {
-                // TODO: remove bomb from inventory
-                // TODO: move this code into Player::use(Room&, slotID)
-                for (auto& mob : map_.currentRoom().mobs()) {
-                    mob.reset(new Confused(std::move(mob)));
-                }
-            } else {
-                actionSuccess = player_.equip(i);
-            }
-        }
+    case 'w':
+    case 'a':
+    case 's':
+    case 'd': {
+        static const std::unordered_map<char, Direction> charToDir = {
+            { 'w', NORTH },
+            { 'a', WEST },
+            { 's', SOUTH },
+            { 'd', EAST }
+        };
+        Direction dir = charToDir.at(c);
+        lastCommand_.reset(new MoveCommand(map_, player_, dir));
         break;
     }
+    case 'p':
+        lastCommand_.reset(new PickUpCommand(map_, player_));
+        break;
+    case 'e':
+        lastCommand_.reset(new UseItemCommand(
+            map_,
+            player_,
+            selectedInventorySlot_
+        ));
+        break;
     default:
         return;
     }
-    if (!actionSuccess) {
-        return;
-    }
-    map_.currentRoom().updateMobs();
-    if (player_.isDead()) {
-        program.toGameOver();
-        program.init();
-    }
-    assert(player_.getLevel() >= 0);
-    if (player_.getXP() >= (1ull << player_.getLevel())) {
-        program.toLevelUp(player_);
-        program.init();
+
+    lastCommand_.reset(new UpdateOnSuccessCommand(
+        map_,
+        player_,
+        program,
+        std::move(lastCommand_)
+    ));
+}
+
+void Game::update(Program& program) {
+    if (lastCommand_) {
+        lastCommand_->operator()();
+        lastCommand_.reset();
     }
 }
 

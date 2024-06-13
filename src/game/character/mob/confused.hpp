@@ -1,3 +1,5 @@
+#pragma once
+
 #include <game/character/mob/mob_decorator.hpp>
 
 class Confused : public MobDecorator {

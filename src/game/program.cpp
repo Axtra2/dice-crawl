@@ -17,8 +17,12 @@ void Program::init() {
     mode_.lock()->init(*this);
 }
 
-void Program::update(char c) {
-    mode_.lock()->update(*this, c);
+void Program::processInput(char c) {
+    mode_.lock()->processInput(*this, c);
+}
+
+void Program::update() {
+    mode_.lock()->update(*this);
 }
 
 void Program::render(Renderer& renderer) {

@@ -17,6 +17,7 @@ set(DICE_CRAWL_SRCS
   ${CMAKE_SOURCE_DIR}/src/platform/renderer.cpp
   ${CMAKE_SOURCE_DIR}/src/platform/files.cpp
 
+  ${CMAKE_SOURCE_DIR}/src/game/program_mode/game_command.cpp
   ${CMAKE_SOURCE_DIR}/src/game/program_mode/game_over.cpp
   ${CMAKE_SOURCE_DIR}/src/game/program_mode/main_menu.cpp
   ${CMAKE_SOURCE_DIR}/src/game/program_mode/esc_menu.cpp

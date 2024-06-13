@@ -29,47 +29,64 @@ void testMenu() {
     assert(i2 == 0);
     assert(i3 == 0);
 
-    menu.update(program, SELECT_KEY);
+    menu.processInput(program, SELECT_KEY);
+    menu.update(program);
     assert(i1 == 1);
     assert(i2 == 0);
     assert(i3 == 0);
 
-    menu.update(program, DOWN_KEY);
+    menu.processInput(program, DOWN_KEY);
+    menu.update(program);
     assert(i1 == 1);
     assert(i2 == 0);
     assert(i3 == 0);
 
-    menu.update(program, SELECT_KEY);
+    menu.processInput(program, SELECT_KEY);
+    menu.update(program);
     assert(i1 == 1);
     assert(i2 == 1);
     assert(i3 == 0);
 
-    menu.update(program, UP_KEY);
+    menu.processInput(program, UP_KEY);
+    menu.update(program);
     assert(i1 == 1);
     assert(i2 == 1);
     assert(i3 == 0);
 
-    menu.update(program, SELECT_KEY);
+    menu.processInput(program, SELECT_KEY);
+    menu.update(program);
     assert(i1 == 2);
     assert(i2 == 1);
     assert(i3 == 0);
 
-    menu.update(program, UP_KEY);
-    menu.update(program, UP_KEY);
-    menu.update(program, UP_KEY);
-    menu.update(program, UP_KEY);
-    menu.update(program, SELECT_KEY);
+    menu.processInput(program, UP_KEY);
+    menu.update(program);
+    menu.processInput(program, UP_KEY);
+    menu.update(program);
+    menu.processInput(program, UP_KEY);
+    menu.update(program);
+    menu.processInput(program, UP_KEY);
+    menu.update(program);
+    menu.processInput(program, SELECT_KEY);
+    menu.update(program);
     assert(i1 == 3);
     assert(i2 == 1);
     assert(i3 == 0);
 
-    menu.update(program, DOWN_KEY);
-    menu.update(program, DOWN_KEY);
-    menu.update(program, DOWN_KEY);
-    menu.update(program, DOWN_KEY);
-    menu.update(program, DOWN_KEY);
-    menu.update(program, DOWN_KEY);
-    menu.update(program, SELECT_KEY);
+    menu.processInput(program, DOWN_KEY);
+    menu.update(program);
+    menu.processInput(program, DOWN_KEY);
+    menu.update(program);
+    menu.processInput(program, DOWN_KEY);
+    menu.update(program);
+    menu.processInput(program, DOWN_KEY);
+    menu.update(program);
+    menu.processInput(program, DOWN_KEY);
+    menu.update(program);
+    menu.processInput(program, DOWN_KEY);
+    menu.update(program);
+    menu.processInput(program, SELECT_KEY);
+    menu.update(program);
     assert(i1 == 3);
     assert(i2 == 1);
     assert(i3 == 1);

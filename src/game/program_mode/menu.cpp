@@ -22,16 +22,28 @@ void Menu::init(Program& program) {
     selectedOption_ = 0;
 }
 
-void Menu::update(Program& program, char c) {
+void Menu::processInput(Program& program, char c) {
     switch (c) {
     case 'j':
-        incInRange(selectedOption_, 0, optionActions_.size());
+        lastCommand_ = [&](auto&) {
+            incInRange(selectedOption_, 0, optionActions_.size());
+        };
         break;
     case 'k':
-        decInRange(selectedOption_, 0, optionActions_.size());
+        lastCommand_ = [&](auto&) {
+            decInRange(selectedOption_, 0, optionActions_.size());
+        };
         break;
     case 'e':
-        optionActions_[selectedOption_](program);
+        lastCommand_ = [&](Program& p) {
+            optionActions_[selectedOption_](p);
+        };
+    }
+}
+
+void Menu::update(Program& program) {
+    if (lastCommand_.has_value()) {
+        lastCommand_.value()(program);
     }
 }
 
