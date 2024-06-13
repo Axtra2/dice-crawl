@@ -17,7 +17,8 @@ public:
     Program();
 
     void init();
-    void update(char c);
+    void processInput(char c);
+    void update();
     void render(Renderer& renderer);
 
     void toMainMenu();

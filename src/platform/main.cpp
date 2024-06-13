@@ -30,7 +30,9 @@ int main() {
         }
         std::string input = e.character();
 
-        program.update(input.back());
+        program.processInput(input.back());
+        program.update();
+
         if (program.finished()) {
             screen.ExitLoopClosure()();
             return true;
