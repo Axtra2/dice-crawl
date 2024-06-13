@@ -1,3 +1,4 @@
+#include <game/character/mob/fantasy_mob.hpp>
 #include <game/character/mob/mob.hpp>
 #include <game/room.hpp>
 
@@ -5,7 +6,7 @@
 #include <memory>
 
 void testReceiveAttack() {
-    Mob mob;
+    FantasyMob mob;
     assert(mob.getHealth() == mob.getMaxHealth());
     assert(!mob.isDead());
 
@@ -23,7 +24,7 @@ void testReceiveAttack() {
 }
 
 void testMove() {
-    Mob mob;
+    FantasyMob mob;
     mob.setX(0);
     mob.setY(0);
     assert(mob.getX() == 0);
@@ -34,12 +35,13 @@ void testStrategy() {
     struct S : MobStrategy {
         int c = 0;
         S() : MobStrategy("a") { }
-        Action pickAction(const Mob&, const Room&) {
+        MobStrategy* clone() const override { return nullptr; }
+        Action pickAction(const Mob&, const Room&) override {
             ++c;
             return {};
         }
     };
-    Mob mob;
+    FantasyMob mob;
     Room room;
     S* strat = new S;
     mob.setStrategy(std::unique_ptr<MobStrategy>(strat));

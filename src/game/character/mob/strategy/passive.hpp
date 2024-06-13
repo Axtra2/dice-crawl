@@ -2,8 +2,11 @@
 
 #include <game/character/mob/mob.hpp>
 
-class Hostile : public MobStrategy {
+class Passive : public MobStrategy {
 public:
-    Hostile();
+    Passive();
+    [[nodiscard]] MobStrategy* clone() const override;
+
+private:
     Action pickAction(const Mob& mob, const Room& room) override;
 };

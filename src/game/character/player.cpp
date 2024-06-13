@@ -87,7 +87,7 @@ bool Player::pickUp(Room& room) {
 }
 
 bool Player::equip(int32_t inventorySlot) {
-    assert(inventorySlot < inventory_.size());
+    assert(inventorySlot < ssize(inventory_));
     auto& invSlot = inventory_[inventorySlot];
     if (!invSlot) {
         return false;

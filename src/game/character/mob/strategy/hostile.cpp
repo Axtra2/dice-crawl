@@ -1,4 +1,4 @@
-#include <game/character/mob/hostile.hpp>
+#include <game/character/mob/strategy/hostile.hpp>
 #include <game/room.hpp>
 
 MobStrategy::Action Hostile::pickAction(const Mob& mob, const Room& room) {
@@ -8,6 +8,10 @@ MobStrategy::Action Hostile::pickAction(const Mob& mob, const Room& room) {
     int32_t dy = room.getPlayerY() - mob.getY();
     action.data = dirFromDXDY(dx, dy);
     return action;
+}
+
+[[nodiscard]] MobStrategy* Hostile::clone() const {
+    return new Hostile();
 }
 
 Hostile::Hostile()

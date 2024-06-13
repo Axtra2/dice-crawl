@@ -47,7 +47,7 @@ void Renderer::render(
         map,
         c
     );
-    c.DrawText(c.width() / 2, c.height() / 2, "x");
+    c.DrawText(c.width() / 2, c.height() / 2, "\u2B24", ftxui::Color::Green);
     auto hud = drawHUD(room, player, selectedInventorySlot);
     new(data_) Element(hbox({canvas(std::move(c)), separator(), hud}));
 }
@@ -187,6 +187,9 @@ static void drawRoom(
             case 2: // helmet
                 drawAt(canvas, x, y, ftxui::Color::Purple);
                 break;
+            case 3: // bomb
+                drawAt(canvas, x, y, ftxui::Color::Red);
+                break;
             default:
                 break;
             }
@@ -195,11 +198,11 @@ static void drawRoom(
 
     // dead mobs
     for (const auto& mob : room.getMobs()) {
-        int32_t x = mob.getX() + topLeftX;
-        int32_t y = mob.getY() + topLeftY;
+        int32_t x = mob->getX() + topLeftX;
+        int32_t y = mob->getY() + topLeftY;
         if (x >= rect.left && x <= rect.right &&
             y >= rect.top  && y <= rect.bottom &&
-            mob.isDead()
+            mob->isDead()
         ) {
             drawAt(canvas, x, y, "\U00002718"); // cross
         }
@@ -207,23 +210,19 @@ static void drawRoom(
 
     // mobs
     for (const auto& mob : room.getMobs()) {
-        int32_t x = mob.getX() + topLeftX;
-        int32_t y = mob.getY() + topLeftY;
+        int32_t x = mob->getX() + topLeftX;
+        int32_t y = mob->getY() + topLeftY;
         if (x >= rect.left && x <= rect.right &&
             y >= rect.top  && y <= rect.bottom
         ) {
             using namespace std::string_literals;
-            if (mob.isDead()) {
+            if (mob->isDead()) {
                 continue;
             }
-            auto icon = mob.getStrategyName().substr(0, 1);
+            auto icon = mob->getStrategyName().substr(0, 1);
             using ftxui::Color;
-            Color color = Color::White;
-            switch (icon.front()) {
-            case 'H': color = Color::Red; break;
-            case 'P': color = Color::White; break;
-            case 'C': color = Color::Yellow; break;
-            }
+            auto [r, g, b] = mob->getColor();
+            Color color = Color(r, g, b);
             drawAt(canvas, x, y, icon, color);
         }
     }

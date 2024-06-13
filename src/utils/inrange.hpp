@@ -29,14 +29,14 @@ bool incInRange(
     std::convertible_to<I> auto fromInclusive,
     std::convertible_to<I> auto toExclusive
 ) {
-    assert(toExclusive > fromInclusive);
+    assert(static_cast<I>(toExclusive) > static_cast<I>(fromInclusive));
     ++v; // TODO: handle overflow
-    if (v < fromInclusive) {
+    if (v < static_cast<I>(fromInclusive)) {
         v = fromInclusive;
         return false;
     }
-    if (v >= toExclusive) {
-        v = toExclusive - 1;
+    if (v >= static_cast<I>(toExclusive)) {
+        v = static_cast<I>(toExclusive) - 1;
         return false;
     }
     return true;
@@ -48,14 +48,14 @@ bool decInRange(
     std::convertible_to<I> auto fromInclusive,
     std::convertible_to<I> auto toExclusive
 ) {
-    assert(toExclusive > fromInclusive);
+    assert(static_cast<I>(toExclusive) > static_cast<I>(fromInclusive));
     --v; // TODO: handle overflow
-    if (v < fromInclusive) {
+    if (v < static_cast<I>(fromInclusive)) {
         v = fromInclusive;
         return false;
     }
-    if (v >= toExclusive) {
-        v = toExclusive - 1;
+    if (v >= static_cast<I>(toExclusive)) {
+        v = static_cast<I>(toExclusive) - 1;
         return false;
     }
     return true;

@@ -17,6 +17,7 @@ foreach(TestSrc ${TEST_SRCS})
   add_executable(${TName} ${TestSrc} $<TARGET_OBJECTS:roguelike_objects>)
   target_include_directories(${TName} PRIVATE ${DICE_CRAWL_INCLUDE})
   target_link_libraries(${TName} PRIVATE ${DICE_CRAWL_LIBS})
+  target_compile_options(${TName} PRIVATE ${DICE_CRAWL_WARNING_FLAGS})
   add_test(NAME ${TName} COMMAND ${TName})
 endforeach()
 

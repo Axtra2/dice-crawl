@@ -1,3 +1,4 @@
+#include <game/character/mob/sci_fi_mob.hpp>
 #include <game/program_mode/esc_menu.hpp>
 #include <game/program.hpp>
 
@@ -18,15 +19,12 @@ EscMenu::EscMenu()
             program.toGame();
         },
         [](Program& program){
-            Map map;
-            map.generate();
-            program.toGame(std::move(map));
+            SciFiMobFactory mobFactory;
+            program.toGame(MapBuilder().mobFactory(mobFactory).build());
             program.init();
         },
         [](Program& program){
-            Map map;
-            map.load("saves/map.txt");
-            program.toGame(std::move(map));
+            program.toGame(MapBuilder().file("saves/map.txt").build());
             program.init();
         },
         [](Program& program){

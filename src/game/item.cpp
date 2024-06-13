@@ -24,7 +24,11 @@ const std::unordered_map<int32_t, ItemInfo>& getItemsDict() {
                     .setName("Helmet")
                     .setWearType(HEAD)
                     .addDefenseDiceSide([](int32_t base){ return base + 3; }, "+3")
-        }
+        },
+        { 3,
+          ItemInfo{}.setW(0.01)
+                    .setName("Bomb")
+        },
     };
     return dict_;
 }

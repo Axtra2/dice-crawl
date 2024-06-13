@@ -1,7 +1,9 @@
+#include <game/character/mob/fantasy_mob.hpp>
 #include <platform/files.hpp>
 #include <game/direction.hpp>
 #include <game/map.hpp>
 
+#include <algorithm>
 #include <optional>
 #include <cassert>
 #include <cstddef>
@@ -36,12 +38,44 @@ void Map::goToNeighbour(Direction direction) {
     initRoom.setPlayer(nullptr);
 }
 
-void Map::generate() {
-    rooms_.clear();
-    Room room;
-    room.generate();
-    rooms_.push_back(std::move(room));
-    neighbours_.assign(1, {});
+void Map::generate(
+    int32_t minNLayers,
+    int32_t maxNLayers,
+    int32_t minRoomWidth,
+    int32_t maxRoomWidth,
+    int32_t minRoomHeight,
+    int32_t maxRoomHeight,
+    MobFactory& mobFactory
+) {
+    std::uniform_int_distribution dis(minNLayers, maxNLayers);
+    num_layers_ = dis(getRNG());
+    layers_.assign(num_layers_ + 1, {});
+
+    generate_node(
+        0,
+        minRoomWidth,
+        maxRoomWidth,
+        minRoomHeight,
+        maxRoomHeight,
+        mobFactory
+    );
+    boss_room_ = generate_node(
+        num_layers_,
+        minRoomWidth,
+        maxRoomWidth,
+        minRoomHeight,
+        maxRoomHeight,
+        mobFactory
+    );
+    traverse(
+        layers_[0][0],
+        0,
+        minRoomWidth,
+        maxRoomWidth,
+        minRoomHeight,
+        maxRoomHeight,
+        mobFactory
+    );
 }
 
 bool Map::load(const char* filename) {
@@ -95,4 +129,198 @@ bool Map::load(std::istream& in) {
         }
     }
     return true;
+}
+
+void Map::traverse(
+    int32_t node_idx,
+    int32_t curr_layer,
+    int32_t minRoomWidth,
+    int32_t maxRoomWidth,
+    int32_t minRoomHeight,
+    int32_t maxRoomHeight,
+    MobFactory& mobFactory
+) {
+    using enum Direction;
+    int32_t num_nodes;
+    std::vector<int32_t> connections;
+    auto& rng = getRNG();
+    {
+        if (curr_layer + 1 >= num_layers_) {
+            neighbours_[node_idx][static_cast<size_t>(NORTH)] = boss_room_;
+            return;
+        }
+
+        std::uniform_int_distribution<> dis(1, 3);
+
+        num_nodes = dis(rng);
+
+        if (layers_[curr_layer + 1].size() >= 3) {
+            std::uniform_real_distribution<> prob(0.0, 1.0);
+            double p = 0.4;
+            int old_count = std::count_if(layers_[curr_layer + 1].begin(), layers_[curr_layer + 1].end(),
+                [&prob, &rng, p](int32_t n) { return prob(rng) > p; });
+
+            if (old_count > num_nodes) old_count = num_nodes;
+            std::sample(layers_[curr_layer + 1].begin(), layers_[curr_layer + 1].end(),
+                        std::back_inserter(connections), old_count, rng);
+            num_nodes -= old_count;
+        }
+    }
+    for (int i = 0; i < num_nodes; ++i) {
+        int32_t new_node = generate_node(
+            curr_layer + 1,
+            minRoomWidth,
+            maxRoomWidth,
+            minRoomHeight,
+            maxRoomHeight,
+            mobFactory
+        );
+        connections.push_back(new_node);
+        traverse(
+            new_node,
+            curr_layer + 1,
+            minRoomWidth,
+            maxRoomWidth,
+            minRoomHeight,
+            maxRoomHeight,
+            mobFactory
+        );
+    }
+
+    Direction dirs[] = { EAST, NORTH, WEST };
+    std::shuffle(std::begin(dirs), std::end(dirs), rng);
+    auto& ns = neighbours_[node_idx];
+    for (size_t i = 0; i < connections.size(); ++i) {
+        ns[static_cast<size_t>(dirs[i])] = connections[i];
+    }
+}
+
+int32_t Map::generate_node(
+    int32_t layer,
+    int32_t minWidth,
+    int32_t maxWidth,
+    int32_t minHeight,
+    int32_t maxHeight,
+    MobFactory& mobFactory
+) {
+    Room room;
+    room.generate(
+        minWidth,
+        maxWidth,
+        minHeight,
+        maxHeight,
+        mobFactory
+    );
+    const int32_t id = rooms_.size();
+    rooms_.push_back(std::move(room));
+    layers_[layer].push_back(id);
+    neighbours_.emplace_back();
+    return id;
+}
+
+
+MapBuilder& MapBuilder::file(std::string_view filename) {
+    assert(!stream_.has_value());
+    assert(mobFactory_ == nullptr);
+    filename_ = filename;
+    return *this;
+}
+
+MapBuilder& MapBuilder::stream(std::istream& is) {
+    assert(!filename_.has_value());
+    assert(mobFactory_ == nullptr);
+    stream_ = &is;
+    return *this;
+}
+
+MapBuilder& MapBuilder::minNLayers(int32_t minNLayers) {
+    assert(!filename_.has_value());
+    assert(!stream_.has_value());
+    minNLayers_ = std::max(0, minNLayers);
+    maxNLayers_ = std::max(minNLayers_, maxNLayers_);
+    return *this;
+}
+
+MapBuilder& MapBuilder::maxNLayers(int32_t maxNLayers) {
+    assert(!filename_.has_value());
+    assert(!stream_.has_value());
+    maxNLayers_ = std::max(0, maxNLayers);
+    minNLayers_ = std::min(minNLayers_, maxNLayers_);
+    return *this;
+}
+
+MapBuilder& MapBuilder::nLayers(int32_t nLayers) {
+    assert(!filename_.has_value());
+    assert(!stream_.has_value());
+    minNLayers(nLayers);
+    maxNLayers(nLayers);
+    return *this;
+}
+
+MapBuilder& MapBuilder::maxRoomSize(int32_t maxWidth, int32_t maxHeight) {
+    assert(!filename_.has_value());
+    assert(!stream_.has_value());
+    maxRoomWidth_ = std::max(0, maxWidth);
+    maxRoomHeight_ = std::max(0, maxHeight);
+
+    minRoomWidth_ = std::min(minRoomWidth_, maxRoomWidth_);
+    minRoomHeight_ = std::min(minRoomHeight_, maxRoomHeight_);
+    return *this;
+}
+
+MapBuilder& MapBuilder::minRoomSize(int32_t minWidth, int32_t minHeight) {
+    assert(!filename_.has_value());
+    assert(!stream_.has_value());
+    minRoomWidth_ = std::max(0, minWidth);
+    minRoomHeight_ = std::max(0, minHeight);
+
+    maxRoomWidth_ = std::max(minRoomWidth_, maxRoomWidth_);
+    maxRoomHeight_ = std::max(minRoomHeight_, maxRoomHeight_);
+    return *this;
+}
+
+MapBuilder& MapBuilder::roomSize(int32_t width, int32_t height) {
+    assert(!filename_.has_value());
+    assert(!stream_.has_value());
+    minRoomSize(width, height);
+    maxRoomSize(width, height);
+    return *this;
+}
+
+MapBuilder& MapBuilder::mobFactory(MobFactory& mobFactory) {
+    assert(!filename_.has_value());
+    assert(!stream_.has_value());
+    mobFactory_ = &mobFactory;
+    return *this;
+}
+
+Map MapBuilder::build() {
+    Map map;
+    if (filename_) {
+        map.load(filename_.value().c_str());
+    } else if (stream_) {
+        map.load(*stream_.value());
+    } else if (mobFactory_ != nullptr) {
+        map.generate(
+            minNLayers_,
+            maxNLayers_,
+            minRoomWidth_,
+            maxRoomWidth_,
+            minRoomHeight_,
+            maxRoomHeight_,
+            *mobFactory_
+        );
+    } else {
+        FantasyMobFactory mobFactory;
+        map.generate(
+            minNLayers_,
+            maxNLayers_,
+            minRoomWidth_,
+            maxRoomWidth_,
+            minRoomHeight_,
+            maxRoomHeight_,
+            mobFactory
+        );
+    }
+    return map;
 }

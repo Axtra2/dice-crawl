@@ -1,4 +1,4 @@
-#include <game/character/mob/coward.hpp>
+#include <game/character/mob/strategy/coward.hpp>
 #include <game/room.hpp>
 
 #include <string>
@@ -10,6 +10,10 @@ MobStrategy::Action Coward::pickAction(const Mob& mob, const Room& room) {
     int32_t dy = room.getPlayerY() - mob.getY();
     action.data = oppositeDir[static_cast<int32_t>(dirFromDXDY(dx, dy))];
     return action;
+}
+
+[[nodiscard]] MobStrategy* Coward::clone() const {
+    return new Coward();
 }
 
 Coward::Coward()

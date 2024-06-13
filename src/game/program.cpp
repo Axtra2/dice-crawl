@@ -72,9 +72,9 @@ void Program::toLevelUp(Player& player) {
 }
 
 void Program::finish() {
-    mode_.reset();
+    isFinished = true;
 }
 
 bool Program::finished() const {
-    return static_cast<bool>(mode_.expired());
+    return isFinished;
 }

@@ -1,6 +1,3 @@
-#include <game/character/mob/hostile.hpp>
-#include <game/character/mob/passive.hpp>
-#include <game/character/mob/coward.hpp>
 #include <utils/random.hpp>
 #include <game/room.hpp>
 #include <game/item.hpp>
@@ -52,7 +49,7 @@ bool Room::isPassable(int32_t x, int32_t y) const {
     return it == tiles_.end() || !getTilesDict().at(it->second).isWall;
 }
 
-void Room::generate(int32_t width, int32_t height) {
+void Room::generate(int32_t width, int32_t height, MobFactory& mobFactory) {
     assert(width >= 0);
     assert(height >= 0);
     assert(width % 2 == 1);
@@ -64,12 +61,12 @@ void Room::generate(int32_t width, int32_t height) {
     // tiles
     const auto& tilesDict = getTilesDict();
     const std::vector<TileID> iToTileID = [&](){
-        std::vector<TileID> iToTileID;
-        iToTileID.reserve(tilesDict.size());
+        std::vector<TileID> iToTileID_;
+        iToTileID_.reserve(tilesDict.size());
         for (const auto& [id, _] : tilesDict) {
-            iToTileID.push_back(id);
+            iToTileID_.push_back(id);
         }
-        return iToTileID;
+        return iToTileID_;
     }();
     std::discrete_distribution tileSpawnDis({1.0, 0.05});
     std::discrete_distribution tileDis = [&](){
@@ -84,12 +81,12 @@ void Room::generate(int32_t width, int32_t height) {
     // items
     const auto& itemsDict = getItemsDict();
     static const std::vector<int32_t> iToItemID = [&](){
-        std::vector<int32_t> iToItemID;
-        iToItemID.reserve(itemsDict.size());
+        std::vector<int32_t> iToItemID_;
+        iToItemID_.reserve(itemsDict.size());
         for (const auto& [id, _] : itemsDict) {
-            iToItemID.push_back(id);
+            iToItemID_.push_back(id);
         }
-        return iToItemID;
+        return iToItemID_;
     }();
     std::discrete_distribution itemSpawnDis({1.0, 0.01});
     std::discrete_distribution itemDis = [&](){
@@ -102,7 +99,7 @@ void Room::generate(int32_t width, int32_t height) {
     }();
 
     // mobs
-    std::vector<double> ws = { 1.0, 1.0, 1.0 };
+    std::vector<double> ws = { 1.0, 1.0, 1.0, 1.0 };
     std::discrete_distribution mobSpawnDis({1.0, 0.01});
     std::discrete_distribution mobStratDis(ws.begin(), ws.end());
 
@@ -115,13 +112,15 @@ void Room::generate(int32_t width, int32_t height) {
 
     for (int32_t y = 0; y < height; ++y) {
         for (int32_t x = 0; x < width; ++x) {
+            if (x == width / 2 || y == height / 2) {
+                // force way between exits
+                continue;
+            }
             if (tileSpawnDis(rng) == 1) {
                 int32_t tileID = iToTileID[tileDis(rng)];
-                if (x != width / 2 && y != height / 2) { // force way between exits
-                    tiles_[{x,y}] = tileID;
-                    if (tilesDict.at(tileID).isWall) {
-                        continue; // do not add items or mobs over walls
-                    }
+                tiles_[{x,y}] = tileID;
+                if (tilesDict.at(tileID).isWall) {
+                    continue; // do not add items or mobs over walls
                 }
             }
 
@@ -131,22 +130,26 @@ void Room::generate(int32_t width, int32_t height) {
             }
 
             if (mobSpawnDis(rng) == 1) {
-                Mob mob;
+                std::unique_ptr<Mob> mob;
                 switch (mobStratDis(rng)) {
                 case 0:
-                    mob.setStrategy(std::unique_ptr<MobStrategy>(new Hostile()));
+                    mob.reset(mobFactory.createHostile());
                     break;
                 case 1:
-                    mob.setStrategy(std::unique_ptr<MobStrategy>(new Passive()));
+                    mob.reset(mobFactory.createPassive());
                     break;
                 case 2:
-                    mob.setStrategy(std::unique_ptr<MobStrategy>(new Coward()));
+                    mob.reset(mobFactory.createCoward());
+                    break;
+                case 3:
+                    mob.reset(mobFactory.createMold());
                     break;
                 default:
+                    assert(false);
                     break;
                 }
-                mob.setX(x);
-                mob.setY(y);
+                mob->setX(x);
+                mob->setY(y);
                 mobs_.push_back(std::move(mob));
                 locationToMob_[{x,y}] = mobs_.size() - 1;
             }
@@ -154,17 +157,36 @@ void Room::generate(int32_t width, int32_t height) {
     }
 }
 
-void Room::generate() {
+void Room::generate(
+    int32_t minWidth,
+    int32_t maxWidth,
+    int32_t minHeight,
+    int32_t maxHeight,
+    MobFactory& mobFactory
+) {
+    std::uniform_int_distribution widthDis(0, (maxWidth - minWidth) / 2);
+    std::uniform_int_distribution heightDis(0, (maxHeight - minHeight) / 2);
+    auto& rng = getRNG();
+    generate(
+        minWidth + 2 * widthDis(rng),
+        minHeight + 2 * heightDis(rng),
+        mobFactory
+    );
+}
+
+void Room::generate(MobFactory& mobFactory) {
     static constexpr int32_t MIN_ROOM_WIDTH = 3;
     static constexpr int32_t MAX_ROOM_WIDTH = 21;
     static constexpr int32_t MIN_ROOM_HEIGHT = 3;
     static constexpr int32_t MAX_ROOM_HEIGHT = 21;
-    std::uniform_int_distribution widthDis(0, (MAX_ROOM_WIDTH - MIN_ROOM_WIDTH) / 2);
-    std::uniform_int_distribution heightDis(0, (MAX_ROOM_HEIGHT - MIN_ROOM_HEIGHT) / 2);
-    auto& rng = getRNG();
-    generate(MIN_ROOM_WIDTH + 2 * widthDis(rng), MIN_ROOM_HEIGHT + 2 * heightDis(rng));
+    generate(
+        MIN_ROOM_WIDTH,
+        MAX_ROOM_WIDTH,
+        MIN_ROOM_HEIGHT,
+        MAX_ROOM_HEIGHT,
+        mobFactory
+    );
 }
-
 
 bool Room::load(std::istream& in) {
     if (!in) {
@@ -210,8 +232,17 @@ std::optional<int32_t> Room::removeItem(int32_t x, int32_t y) {
 }
 
 void Room::updateMobs() {
-    for (auto& mob : mobs_) {
-        mob.executeAction(mob.pickAction(*this), *this);
+    // save initial size to not let mobs spawned
+    // during this turn act
+    const size_t n = mobs_.size();
+    // use indices for iteration here because some
+    // mobs might push into mobs vector and invalidate
+    // iterators
+    for (size_t i = 0; i < n; ++i) {
+        if (mobs_[i]->isDead()) {
+            continue;
+        }
+        mobs_[i]->executeAction(mobs_[i]->pickAction(*this), *this);
     }
 }
 
@@ -219,6 +250,8 @@ void Room::relocateMob(
     int32_t fromX, int32_t fromY,
     int32_t toX, int32_t toY
 ) {
+    assert(characterAt(toX, toY) == nullptr);
+    assert(isPassable(toX, toY));
     auto it = locationToMob_.find({fromX,fromY});
     if (it == locationToMob_.end()) {
         return;
@@ -228,7 +261,18 @@ void Room::relocateMob(
     locationToMob_[{toX,toY}] = mobID;
 }
 
-const std::vector<Mob>& Room::getMobs() const {
+Mob& Room::spawnMob(int32_t x, int32_t y, const Mob& prototype) {
+    assert(characterAt(x, y) == nullptr);
+    assert(isPassable(x, y));
+    mobs_.emplace_back(prototype.clone());
+    mobs_.back()->setX(x);
+    mobs_.back()->setY(y);
+    int32_t mobID = ssize(mobs_) - 1;
+    locationToMob_[{x,y}] = mobID;
+    return *mobs_.back();
+}
+
+const std::vector<std::unique_ptr<Mob>>& Room::getMobs() const {
     return mobs_;
 }
 
@@ -258,15 +302,19 @@ const Character* Room::characterAt(int32_t x, int32_t y) const {
     if (it == locationToMob_.end()) {
         return nullptr;
     }
-    const Mob& mob = mobs_[it->second];
-    if (mob.isDead()) {
+    const auto& mob = mobs_[it->second];
+    if (mob->isDead()) {
         return nullptr;
     }
-    return &mob;
+    return mob.get();
 }
 
 Character* Room::characterAt(int32_t x, int32_t y) {
     return const_cast<Character*>(
         static_cast<const Room*>(this)->characterAt(x, y)
     );
+}
+
+std::vector<std::unique_ptr<Mob>>& Room::mobs() {
+    return mobs_;
 }
